@@ -1,0 +1,121 @@
+.bqf-quote-button{
+    border:0;
+    color:#ffffff;
+    border-color:#dca54a;
+    background-color:#dca54a;
+    padding:5px 10px;
+    font-family:inherit;
+    font-weight:600;
+    font-size:0.8rem;
+    line-height:1em;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    border-radius:50px;
+    display:inline-block;
+    text-decoration:none;
+    transition:all .3s ease;
+    cursor:pointer;
+}
+
+.bqf-quote-button:hover{
+    color:#ffffff;
+    background-color:#f27305;
+    border-color:#f27305;
+}
+
+/* Modal Overlay */
+.bqf-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: none;
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal Content */
+.bqf-modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.bqf-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.bqf-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.bqf-form-group {
+    margin-bottom: 15px;
+}
+
+.bqf-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.bqf-form-group input,
+.bqf-form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.bqf-form-group input[readonly] {
+    background-color: #f9f9f9;
+}
+
+.bqf-submit-button {
+    background-color: #dca54a;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.bqf-submit-button:hover {
+    background-color: #f27305;
+}
+
+.bqf-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+}
+
+.bqf-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.bqf-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
