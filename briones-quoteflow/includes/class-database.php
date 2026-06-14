@@ -23,6 +23,7 @@ class BQF_Database {
             message text NOT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             status varchar(20) DEFAULT 'pending' NOT NULL,
+            email_log text DEFAULT '' NOT NULL,
             PRIMARY KEY  (id)
         ) $charset_collate;";
 

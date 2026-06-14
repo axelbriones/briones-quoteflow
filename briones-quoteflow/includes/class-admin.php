@@ -9,6 +9,8 @@ class BQF_Admin {
         add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'admin_init', array( $this, 'handle_csv_export' ) );
+        add_action( 'admin_init', array( $this, 'handle_status_update' ) );
+        add_action( 'wp_ajax_bqf_generate_pdf', array( $this, 'generate_pdf_view' ) );
     }
 
     public function add_menu_page() {
@@ -149,6 +151,7 @@ class BQF_Admin {
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Status</th>
+                        <th>Email Logs</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -159,19 +162,75 @@ class BQF_Admin {
                                 <td><?php echo esc_html( $quote->product_name ); ?></td>
                                 <td><?php echo esc_html( $quote->name ); ?></td>
                                 <td><?php echo esc_html( $quote->email ); ?></td>
-                                <td><?php echo esc_html( $quote->phone ); ?></td>
-                                <td><?php echo esc_html( $quote->status ); ?></td>
+                                <td>
+                                    <?php echo esc_html( $quote->phone ); ?>
+                                    <?php if ( ! empty( $quote->phone ) ) :
+                                        $clean_phone = preg_replace('/[^0-9+]/', '', $quote->phone);
+                                        $wa_message = rawurlencode( "Hello {$quote->name},\n\nWe received your quote request for {$quote->product_name}." );
+                                        $wa_url = "https://wa.me/{$clean_phone}?text={$wa_message}";
+                                    ?>
+                                        <br><a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" style="color: #25D366; text-decoration: none; font-weight: bold; font-size: 12px;">&#x1F4F1; WhatsApp</a>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <form method="post" action="">
+                                        <?php wp_nonce_field( 'bqf_status_nonce', 'bqf_status_nonce' ); ?>
+                                        <input type="hidden" name="bqf_quote_id" value="<?php echo esc_attr( $quote->id ); ?>">
+                                        <select name="bqf_new_status" onchange="this.form.submit()">
+                                            <option value="New" <?php selected( $quote->status, 'New' ); ?>>New</option>
+                                            <option value="Contacted" <?php selected( $quote->status, 'Contacted' ); ?>>Contacted</option>
+                                            <option value="Quoted" <?php selected( $quote->status, 'Quoted' ); ?>>Quoted</option>
+                                            <option value="Won" <?php selected( $quote->status, 'Won' ); ?>>Won</option>
+                                            <option value="Lost" <?php selected( $quote->status, 'Lost' ); ?>>Lost</option>
+                                            <option value="pending" <?php selected( $quote->status, 'pending' ); ?>>Pending</option>
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>
+                                    <?php if ( ! empty( $quote->email_log ) ) : ?>
+                                        <span style="font-size: 11px; color: #666;"><?php echo esc_html( $quote->email_log ); ?></span>
+                                    <?php else : ?>
+                                        <span style="font-size: 11px; color: #aaa;">No logs</span>
+                                    <?php endif; ?>
+                                    <br>
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button button-small" style="margin-top:5px;">Print PDF</a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else : ?>
                         <tr>
-                            <td colspan="6">No quotes found.</td>
+                            <td colspan="7">No quotes found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
         <?php
+    }
+
+    public function handle_status_update() {
+        if ( isset( $_POST['bqf_quote_id'] ) && isset( $_POST['bqf_new_status'] ) && isset( $_POST['bqf_status_nonce'] ) && wp_verify_nonce( $_POST['bqf_status_nonce'], 'bqf_status_nonce' ) ) {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return;
+            }
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'bqf_quotes';
+            $quote_id = intval( $_POST['bqf_quote_id'] );
+            $new_status = sanitize_text_field( $_POST['bqf_new_status'] );
+
+            $wpdb->update(
+                $table_name,
+                array( 'status' => $new_status ),
+                array( 'id' => $quote_id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+
+            // Redirect back to same page to prevent re-submission
+            wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+            exit;
+        }
     }
 
     public function handle_csv_export() {
@@ -214,5 +273,110 @@ class BQF_Admin {
             fclose( $output );
             exit;
         }
+    }
+
+    public function generate_pdf_view() {
+        if ( ! current_user_can( 'manage_options' ) || empty( $_GET['quote_id'] ) || ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'bqf_pdf_nonce' ) ) {
+            wp_die( 'Unauthorized access.' );
+        }
+
+        global $wpdb;
+        $quote_id = intval( $_GET['quote_id'] );
+        $table_name = $wpdb->prefix . 'bqf_quotes';
+        $quote = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $quote_id ) );
+
+        if ( ! $quote ) {
+            wp_die( 'Quote not found.' );
+        }
+
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Quote Request #<?php echo esc_html( $quote->id ); ?></title>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+                .header { border-bottom: 2px solid #dca54a; padding-bottom: 20px; margin-bottom: 30px; }
+                .header h1 { margin: 0; color: #dca54a; }
+                .header p { margin: 5px 0 0 0; color: #666; }
+                .section { margin-bottom: 30px; }
+                .section h2 { font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+                table { width: 100%; border-collapse: collapse; }
+                table th, table td { padding: 10px; border: 1px solid #eee; text-align: left; }
+                table th { background: #f9f9f9; width: 30%; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+                <button onclick="window.print();" style="padding: 10px 20px; background: #dca54a; color: #fff; border: none; cursor: pointer; border-radius: 4px;">Print / Save as PDF</button>
+            </div>
+
+            <div class="header">
+                <h1><?php echo esc_html( get_bloginfo( 'name' ) ); ?></h1>
+                <p>Quote Request #<?php echo str_pad( esc_html( $quote->id ), 6, '0', STR_PAD_LEFT ); ?></p>
+                <p>Date: <?php echo esc_html( date( 'F j, Y', strtotime( $quote->created_at ) ) ); ?></p>
+            </div>
+
+            <div class="section">
+                <h2>Product Details</h2>
+                <table>
+                    <tr>
+                        <th>Product</th>
+                        <td><?php echo esc_html( $quote->product_name ); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Price</th>
+                        <td><?php echo esc_html( $quote->product_price ); ?></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>Customer Details</h2>
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <td><?php echo esc_html( $quote->name ); ?></td>
+                    </tr>
+                    <?php if ( ! empty( $quote->company ) ) : ?>
+                    <tr>
+                        <th>Company</th>
+                        <td><?php echo esc_html( $quote->company ); ?></td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <th>Email</th>
+                        <td><?php echo esc_html( $quote->email ); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Phone</th>
+                        <td><?php echo esc_html( $quote->phone ); ?></td>
+                    </tr>
+                </table>
+            </div>
+
+            <?php if ( ! empty( $quote->message ) ) : ?>
+            <div class="section">
+                <h2>Additional Message</h2>
+                <p style="background: #f9f9f9; padding: 15px; border: 1px solid #eee;"><?php echo nl2br( esc_html( $quote->message ) ); ?></p>
+            </div>
+            <?php endif; ?>
+
+            <div style="margin-top: 50px; text-align: center; color: #999; font-size: 12px;">
+                <p>Thank you for your interest.</p>
+            </div>
+
+            <script>
+                // Auto-trigger print dialog when opened
+                window.onload = function() { window.print(); }
+            </script>
+        </body>
+        </html>
+        <?php
+        exit;
     }
 }

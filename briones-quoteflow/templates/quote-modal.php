@@ -56,6 +56,17 @@ if ( ! defined( 'ABSPATH' ) ) {
             </div>
             <?php endif; ?>
 
+            <?php
+            /**
+             * Hook to add custom extra fields.
+             *
+             * For example, developers can hook into this to add 'Quantity', 'Delivery Location', etc.
+             * Output should be wrapped in .bqf-form-group div with proper inputs.
+             * Add inputs with class `bqf-custom-field` to auto-capture them.
+             */
+            do_action( 'bqf_after_quote_fields' );
+            ?>
+
             <div style="display:none;">
                 <label for="bqf_honeypot"><?php esc_html_e( 'Leave this field empty', 'briones-quoteflow' ); ?></label>
                 <input type="text" id="bqf_honeypot" name="bqf_honeypot" value="">

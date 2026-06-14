@@ -58,6 +58,19 @@ class BQF_Modal {
             }
         }
 
+        $message_content = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
+
+        // Append custom fields to the message body if present
+        if ( ! empty( $_POST['custom_fields'] ) ) {
+            $custom_fields = json_decode( stripslashes( $_POST['custom_fields'] ), true );
+            if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
+                $message_content .= "\n\n--- Extra Details ---\n";
+                foreach ( $custom_fields as $key => $val ) {
+                    $message_content .= sanitize_text_field( $key ) . ": " . sanitize_text_field( $val ) . "\n";
+                }
+            }
+        }
+
         $data = array(
             'product_id'    => $_POST['product_id'],
             'product_name'  => $_POST['product_name'],
@@ -66,18 +79,32 @@ class BQF_Modal {
             'company'       => isset( $_POST['company'] ) ? $_POST['company'] : '',
             'email'         => $_POST['email'],
             'phone'         => isset( $_POST['phone'] ) ? $_POST['phone'] : '',
-            'message'       => isset( $_POST['message'] ) ? $_POST['message'] : ''
+            'message'       => $message_content
         );
 
-        // Save to DB
+        // Save to DB (We get the ID back if we use a modified insert_quote)
+        global $wpdb;
         $inserted = BQF_Database::insert_quote( $data );
+        $quote_id = $wpdb->insert_id;
 
         // Send Email
         $emailed = BQF_Email::send_quote_email( $data );
 
+        $log_message = $emailed ? 'Admin Email Sent' : 'Admin Email Failed';
+
         // Send Confirmation
+        $customer_emailed = false;
         if ( $emailed || $inserted ) {
-            BQF_Email::send_customer_confirmation( $data );
+            $customer_emailed = BQF_Email::send_customer_confirmation( $data );
+            $log_message .= $customer_emailed ? ' | Customer Email Sent' : ' | Customer Email Failed';
+
+            if ( $quote_id ) {
+                $wpdb->update(
+                    $wpdb->prefix . 'bqf_quotes',
+                    array( 'email_log' => $log_message ),
+                    array( 'id' => $quote_id )
+                );
+            }
 
             // Increment rate limit attempts
             $attempts = ( false === $attempts ) ? 1 : $attempts + 1;

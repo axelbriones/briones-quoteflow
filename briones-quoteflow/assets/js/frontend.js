@@ -80,6 +80,20 @@ jQuery(document).ready(function($) {
             bqf_honeypot: $('#bqf_honeypot').val()
         };
 
+        // Capture any custom fields added via the hook
+        var customFields = {};
+        $('.bqf-custom-field').each(function() {
+            var name = $(this).attr('name');
+            var val = $(this).val();
+            if ( name ) {
+                customFields[name] = val;
+            }
+        });
+
+        if ( Object.keys(customFields).length > 0 ) {
+            data.custom_fields = JSON.stringify(customFields);
+        }
+
         $.post(bqf_ajax.ajax_url, data, function(response) {
             if (response.success) {
                 $messageDiv.addClass('success').text(response.data.message).show();
