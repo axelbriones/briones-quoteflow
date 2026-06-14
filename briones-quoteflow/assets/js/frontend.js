@@ -6,6 +6,31 @@ jQuery(document).ready(function($) {
         var productId = $(this).data('product_id');
         var productName = $(this).data('product_name');
         var productPrice = $(this).data('product_price');
+        var isVariable = $(this).data('is_variable');
+
+        // Check for variation selections if it's a variable product on single page
+        if ( isVariable == '1' && $('.variations_form').length > 0 ) {
+            var variationId = $('input[name="variation_id"]').val();
+            if ( !variationId || variationId == '0' || variationId == '' ) {
+                alert('Please select product options before requesting a quote.');
+                return;
+            }
+
+            // Append attributes to product name
+            var attributes = [];
+            $('.variations select').each(function() {
+                var label = $(this).closest('tr').find('.label label').text();
+                var val = $(this).find('option:selected').text();
+                if(val && val !== 'Choose an option') {
+                    attributes.push(label + ': ' + val);
+                }
+            });
+
+            if (attributes.length > 0) {
+                productName += ' (' + attributes.join(', ') + ')';
+            }
+            productId = variationId; // Use the specific variation ID
+        }
 
         $('#bqf_product_id').val(productId);
         $('#bqf_product').val(productName);
@@ -51,7 +76,8 @@ jQuery(document).ready(function($) {
             company: $('#bqf_company').val(),
             email: $('#bqf_email').val(),
             phone: $('#bqf_phone').val(),
-            message: $('#bqf_message').val()
+            message: $('#bqf_message').val(),
+            bqf_honeypot: $('#bqf_honeypot').val()
         };
 
         $.post(bqf_ajax.ajax_url, data, function(response) {

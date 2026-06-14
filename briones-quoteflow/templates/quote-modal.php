@@ -30,24 +30,35 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <input type="text" id="bqf_full_name" name="full_name" required>
             </div>
 
+            <?php if ( get_option( 'bqf_field_company', 1 ) ) : ?>
             <div class="bqf-form-group">
                 <label for="bqf_company"><?php esc_html_e( 'Company', 'briones-quoteflow' ); ?></label>
                 <input type="text" id="bqf_company" name="company">
             </div>
+            <?php endif; ?>
 
             <div class="bqf-form-group">
                 <label for="bqf_email"><?php esc_html_e( 'Email', 'briones-quoteflow' ); ?> *</label>
                 <input type="email" id="bqf_email" name="email" required>
             </div>
 
+            <?php if ( get_option( 'bqf_field_phone', 1 ) ) : ?>
             <div class="bqf-form-group">
                 <label for="bqf_phone"><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?> *</label>
                 <input type="tel" id="bqf_phone" name="phone" required>
             </div>
+            <?php endif; ?>
 
+            <?php if ( get_option( 'bqf_field_message', 1 ) ) : ?>
             <div class="bqf-form-group">
                 <label for="bqf_message"><?php esc_html_e( 'Message', 'briones-quoteflow' ); ?></label>
                 <textarea id="bqf_message" name="message" rows="4"></textarea>
+            </div>
+            <?php endif; ?>
+
+            <div style="display:none;">
+                <label for="bqf_honeypot"><?php esc_html_e( 'Leave this field empty', 'briones-quoteflow' ); ?></label>
+                <input type="text" id="bqf_honeypot" name="bqf_honeypot" value="">
             </div>
 
             <button type="submit" class="bqf-submit-button"><?php esc_html_e( 'Send Request', 'briones-quoteflow' ); ?></button>

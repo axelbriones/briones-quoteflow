@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Briones QuoteFlow
  * Description: Replace WooCommerce Add to Cart with an elegant Request a Quote modal, store leads in DB, and send notifications via wp_mail().
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Briones
  * Text Domain: briones-quoteflow
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-define( 'BQF_VERSION', '1.0.0' );
+define( 'BQF_VERSION', '1.1.0' );
 define( 'BQF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BQF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

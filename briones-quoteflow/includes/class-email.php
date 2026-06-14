@@ -14,17 +14,61 @@ class BQF_Email {
         $phone = sanitize_text_field( $data['phone'] );
         $message_text = sanitize_textarea_field( $data['message'] );
 
+        $product_id = intval( $data['product_id'] );
+        $product_url = get_permalink( $product_id );
+
+        $sku = '';
+        $image_url = '';
+        if ( $product_id ) {
+            $product = wc_get_product( $product_id );
+            if ( $product ) {
+                $sku = $product->get_sku();
+                $image_id = $product->get_image_id();
+                if ( $image_id ) {
+                    $image_url = wp_get_attachment_url( $image_id );
+                }
+            }
+        }
+
         $subject = sprintf( 'New Quote Request - %s', $product_name );
 
         $message = "Product: {$product_name}\n";
-        $message .= "Price: {$product_price}\n\n";
-        $message .= "Customer:\n{$full_name}\n\n";
+        $message .= "Price: {$product_price}\n";
+        if ( ! empty( $sku ) ) {
+            $message .= "SKU: {$sku}\n";
+        }
+        $message .= "Product URL: {$product_url}\n";
+        if ( ! empty( $image_url ) ) {
+            $message .= "Featured Image: {$image_url}\n";
+        }
+        $message .= "\nCustomer:\n{$full_name}\n\n";
         $message .= "Email:\n{$email}\n\n";
         $message .= "Phone:\n{$phone}\n\n";
         $message .= "Message:\n{$message_text}\n";
 
         $headers = array(
             'Reply-To: ' . $full_name . ' <' . $email . '>'
+        );
+
+        return wp_mail( $to, $subject, $message, $headers );
+    }
+
+    public static function send_customer_confirmation( $data ) {
+        $to = sanitize_email( $data['email'] );
+        $product_name = sanitize_text_field( $data['product_name'] );
+
+        $subject = __( "We've received your quote request", 'briones-quoteflow' );
+
+        $message = __( "Thank you for contacting us.", 'briones-quoteflow' ) . "\n\n";
+        $message .= __( "Product:", 'briones-quoteflow' ) . "\n";
+        $message .= "{$product_name}\n\n";
+        $message .= __( "Our team will review your request and contact you shortly.", 'briones-quoteflow' ) . "\n";
+
+        $from_email = get_option( 'admin_email' );
+        $from_name = get_bloginfo( 'name' );
+
+        $headers = array(
+            'From: ' . $from_name . ' <' . $from_email . '>'
         );
 
         return wp_mail( $to, $subject, $message, $headers );

@@ -33,10 +33,28 @@ class BQF_Modal {
     public function handle_ajax_submit() {
         check_ajax_referer( 'bqf_quote_nonce', 'nonce' );
 
-        $required_fields = array( 'product_id', 'product_name', 'product_price', 'full_name', 'email', 'phone' );
+        // Spam Protection: Rate Limiting
+        $ip_address = sanitize_text_field( $_SERVER['REMOTE_ADDR'] );
+        $transient_key = 'bqf_rate_limit_' . md5( $ip_address );
+        $attempts = get_transient( $transient_key );
+
+        if ( false !== $attempts && $attempts > 3 ) { // Max 3 requests per IP within the timeframe
+            wp_send_json_error( array( 'message' => __( 'Too many requests. Please try again later.', 'briones-quoteflow' ) ) );
+        }
+
+        // Spam Protection: Honeypot check
+        if ( ! empty( $_POST['bqf_honeypot'] ) ) {
+            wp_send_json_error( array( 'message' => __( 'Spam detected.', 'briones-quoteflow' ) ) );
+        }
+
+        $required_fields = array( 'product_id', 'product_name', 'product_price', 'full_name', 'email' );
+        if ( get_option( 'bqf_field_phone', 1 ) ) {
+            $required_fields[] = 'phone';
+        }
+
         foreach ( $required_fields as $field ) {
             if ( empty( $_POST[ $field ] ) ) {
-                wp_send_json_error( array( 'message' => 'Please fill in all required fields.' ) );
+                wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'briones-quoteflow' ) ) );
             }
         }
 
@@ -47,7 +65,7 @@ class BQF_Modal {
             'full_name'     => $_POST['full_name'],
             'company'       => isset( $_POST['company'] ) ? $_POST['company'] : '',
             'email'         => $_POST['email'],
-            'phone'         => $_POST['phone'],
+            'phone'         => isset( $_POST['phone'] ) ? $_POST['phone'] : '',
             'message'       => isset( $_POST['message'] ) ? $_POST['message'] : ''
         );
 
@@ -57,11 +75,18 @@ class BQF_Modal {
         // Send Email
         $emailed = BQF_Email::send_quote_email( $data );
 
-        if ( $inserted || $emailed ) {
-            $success_message = get_option( 'bqf_success_message', 'Your quote request has been sent successfully.' );
+        // Send Confirmation
+        if ( $emailed || $inserted ) {
+            BQF_Email::send_customer_confirmation( $data );
+
+            // Increment rate limit attempts
+            $attempts = ( false === $attempts ) ? 1 : $attempts + 1;
+            set_transient( $transient_key, $attempts, 15 * MINUTE_IN_SECONDS ); // 15 minutes lockout
+
+            $success_message = get_option( 'bqf_success_message', __( 'Your quote request has been sent successfully.', 'briones-quoteflow' ) );
             wp_send_json_success( array( 'message' => $success_message ) );
         } else {
-            wp_send_json_error( array( 'message' => 'Something went wrong. Please try again.' ) );
+            wp_send_json_error( array( 'message' => __( 'Something went wrong. Please try again.', 'briones-quoteflow' ) ) );
         }
     }
 }
