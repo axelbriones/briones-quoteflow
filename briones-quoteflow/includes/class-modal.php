@@ -153,9 +153,15 @@ class BQF_Modal {
             set_transient( $transient_key, $attempts, 15 * MINUTE_IN_SECONDS ); // 15 minutes lockout
 
             $success_message = get_option( 'bqf_success_message', __( 'Your quote request has been sent successfully.', 'briones-quoteflow' ) );
+
+            // Intelligent error handling: if saved to DB but email failed, tell the user it was saved anyway
+            if ( ! $emailed && $inserted ) {
+                $success_message = __( 'Your request has been received, but our notification system is experiencing delays. We will contact you soon.', 'briones-quoteflow' );
+            }
+
             wp_send_json_success( array( 'message' => $success_message ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Something went wrong. Please try again.', 'briones-quoteflow' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Something went wrong while saving your request. Please try again later.', 'briones-quoteflow' ) ) );
         }
     }
 }

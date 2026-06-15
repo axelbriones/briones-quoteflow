@@ -94,7 +94,7 @@ class BQF_Database {
                 'email'         => sanitize_email( $data['email'] ),
                 'phone'         => sanitize_text_field( $data['phone'] ),
                 'message'       => sanitize_textarea_field( $data['message'] ),
-                'status'        => 'new',
+                'status'        => 'New',
                 'timeline'      => wp_json_encode( $timeline ),
                 'created_at'    => $current_time,
                 'updated_at'    => $current_time

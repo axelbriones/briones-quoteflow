@@ -65,14 +65,22 @@ class BQF_Admin {
         // Enqueue color picker
         wp_enqueue_style( 'wp-color-picker' );
         wp_enqueue_script( 'wp-color-picker' );
+
+        $active_tab = isset( $_GET['tab'] ) ? $_GET['tab'] : 'general';
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'QuoteFlow Settings', 'briones-quoteflow' ); ?></h1>
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=quoteflow&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'briones-quoteflow' ); ?></a>
+                <a href="?page=quoteflow&tab=fields" class="nav-tab <?php echo $active_tab == 'fields' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Fields', 'briones-quoteflow' ); ?></a>
+                <a href="?page=quoteflow&tab=design" class="nav-tab <?php echo $active_tab == 'design' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Design', 'briones-quoteflow' ); ?></a>
+                <a href="?page=quoteflow&tab=email" class="nav-tab <?php echo $active_tab == 'email' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Email Templates', 'briones-quoteflow' ); ?></a>
+            </h2>
+
             <form method="post" action="options.php">
                 <?php settings_fields( 'bqf_settings_group' ); ?>
-                <?php do_settings_sections( 'bqf_settings_group' ); ?>
 
-                <h2 class="title"><?php esc_html_e( 'General Settings', 'briones-quoteflow' ); ?></h2>
+                <?php if ( $active_tab == 'general' ) : ?>
                 <table class="form-table">
                     <tr valign="top">
                         <th scope="row"><?php esc_html_e( 'Notification Email', 'briones-quoteflow' ); ?></th>
@@ -106,8 +114,9 @@ class BQF_Admin {
                         </td>
                     </tr>
                 </table>
+                <?php endif; ?>
 
-                <h2 class="title"><?php esc_html_e( 'Visual Settings', 'briones-quoteflow' ); ?></h2>
+                <?php if ( $active_tab == 'design' ) : ?>
                 <table class="form-table">
                     <tr valign="top">
                         <th scope="row"><?php esc_html_e( 'Primary Button Color', 'briones-quoteflow' ); ?></th>
@@ -124,8 +133,9 @@ class BQF_Admin {
                         </td>
                     </tr>
                 </table>
+                <?php endif; ?>
 
-                <h2 class="title"><?php esc_html_e( 'Form Fields Configuration', 'briones-quoteflow' ); ?></h2>
+                <?php if ( $active_tab == 'fields' ) : ?>
                 <p><?php esc_html_e( 'Select which fields should be visible in the quote request form (Name and Email are always required).', 'briones-quoteflow' ); ?></p>
                 <table class="form-table">
                     <tr valign="top">
@@ -141,8 +151,9 @@ class BQF_Admin {
                         <td><input type="checkbox" name="bqf_field_message" value="1" <?php checked( 1, get_option('bqf_field_message', 1), true ); ?> /></td>
                     </tr>
                 </table>
+                <?php endif; ?>
 
-                <h2 class="title"><?php esc_html_e( 'Email Templates', 'briones-quoteflow' ); ?></h2>
+                <?php if ( $active_tab == 'email' ) : ?>
                 <p><?php esc_html_e( 'Available Variables: {product_name}, {customer_name}, {product_price}', 'briones-quoteflow' ); ?></p>
                 <table class="form-table">
                     <tr valign="top">
@@ -167,13 +178,16 @@ class BQF_Admin {
                         </td>
                     </tr>
                 </table>
+                <?php endif; ?>
 
                 <?php submit_button(); ?>
             </form>
         </div>
         <script>
             jQuery(document).ready(function($){
-                $('.bqf-color-picker').wpColorPicker();
+                if (typeof $.fn.wpColorPicker !== 'undefined') {
+                    $('.bqf-color-picker').wpColorPicker();
+                }
             });
         </script>
         <?php
@@ -199,7 +213,22 @@ class BQF_Admin {
 
         $top_products = $wpdb->get_results( "SELECT product_name, COUNT(*) as count FROM $table_name GROUP BY product_id ORDER BY count DESC LIMIT 5" );
 
-        $quotes = $wpdb->get_results( "SELECT id, product_name, name, email, phone, status, created_at, email_log FROM $table_name ORDER BY created_at DESC LIMIT 100" );
+        // Search & Pagination Logic
+        $per_page = 20;
+        $current_page = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $offset = ( $current_page - 1 ) * $per_page;
+        $search_term = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
+
+        $where_clause = "";
+        if ( ! empty( $search_term ) ) {
+            $like = '%' . $wpdb->esc_like( $search_term ) . '%';
+            $where_clause = $wpdb->prepare( "WHERE product_name LIKE %s OR name LIKE %s OR email LIKE %s", $like, $like, $like );
+        }
+
+        $total_items = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name $where_clause" );
+        $total_pages = ceil( $total_items / $per_page );
+
+        $quotes = $wpdb->get_results( "SELECT id, product_name, name, email, phone, status, created_at, email_log FROM $table_name $where_clause ORDER BY created_at DESC LIMIT $per_page OFFSET $offset" );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Quotes Dashboard', 'briones-quoteflow' ); ?></h1>
@@ -242,13 +271,45 @@ class BQF_Admin {
                 <?php endif; ?>
             </div>
 
-            <form method="post" action="" style="margin-bottom: 20px;">
-                <?php wp_nonce_field( 'bqf_export_nonce', 'bqf_export_nonce' ); ?>
-                <input type="hidden" name="bqf_export_csv" value="1">
-                <?php submit_button( __( 'Export All Quotes to CSV', 'briones-quoteflow' ), 'primary', 'submit', false ); ?>
-            </form>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                <form method="post" action="" style="display:inline-block;">
+                    <?php wp_nonce_field( 'bqf_export_nonce', 'bqf_export_nonce' ); ?>
+                    <input type="hidden" name="bqf_export_csv" value="1">
+                    <?php submit_button( __( 'Export All Quotes to CSV', 'briones-quoteflow' ), 'primary', 'submit', false ); ?>
+                </form>
+
+                <form method="get" action="">
+                    <input type="hidden" name="page" value="quoteflow-quotes" />
+                    <p class="search-box" style="margin:0;">
+                        <label class="screen-reader-text" for="post-search-input"><?php esc_html_e( 'Search Leads:', 'briones-quoteflow' ); ?></label>
+                        <input type="search" id="post-search-input" name="s" value="<?php echo esc_attr( $search_term ); ?>">
+                        <input type="submit" id="search-submit" class="button" value="<?php esc_attr_e( 'Search Leads', 'briones-quoteflow' ); ?>">
+                    </p>
+                </form>
+            </div>
 
             <p><em><?php esc_html_e( 'Click on the Product Name to view full Lead details.', 'briones-quoteflow' ); ?></em></p>
+
+            <div class="tablenav top">
+                <div class="tablenav-pages">
+                    <span class="displaying-num"><?php printf( _n( '%s item', '%s items', $total_items, 'briones-quoteflow' ), number_format_i18n( $total_items ) ); ?></span>
+                    <?php if ( $total_pages > 1 ) : ?>
+                        <span class="pagination-links">
+                            <?php
+                            echo paginate_links( array(
+                                'base'      => add_query_arg( 'paged', '%#%' ),
+                                'format'    => '',
+                                'prev_text' => __( '&laquo;', 'briones-quoteflow' ),
+                                'next_text' => __( '&raquo;', 'briones-quoteflow' ),
+                                'total'     => $total_pages,
+                                'current'   => $current_page
+                            ) );
+                            ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
@@ -309,11 +370,34 @@ class BQF_Admin {
                         <?php endforeach; ?>
                     <?php else : ?>
                         <tr>
-                            <td colspan="7">No quotes found.</td>
+                            <td colspan="7" style="text-align:center; padding: 30px;">
+                                <?php esc_html_e( 'No quote requests yet.', 'briones-quoteflow' ); ?>
+                            </td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+
+            <div class="tablenav bottom">
+                <div class="tablenav-pages">
+                    <span class="displaying-num"><?php printf( _n( '%s item', '%s items', $total_items, 'briones-quoteflow' ), number_format_i18n( $total_items ) ); ?></span>
+                    <?php if ( $total_pages > 1 ) : ?>
+                        <span class="pagination-links">
+                            <?php
+                            echo paginate_links( array(
+                                'base'      => add_query_arg( 'paged', '%#%' ),
+                                'format'    => '',
+                                'prev_text' => __( '&laquo;', 'briones-quoteflow' ),
+                                'next_text' => __( '&raquo;', 'briones-quoteflow' ),
+                                'total'     => $total_pages,
+                                'current'   => $current_page
+                            ) );
+                            ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
         </div>
         <?php
     }
