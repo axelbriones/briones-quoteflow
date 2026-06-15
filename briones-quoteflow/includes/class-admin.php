@@ -12,6 +12,7 @@ class BQF_Admin {
         add_action( 'admin_init', array( $this, 'handle_status_update' ) );
         add_action( 'admin_init', array( $this, 'handle_add_note' ) );
         add_action( 'admin_init', array( $this, 'handle_delete_quote' ) );
+        add_action( 'admin_init', array( $this, 'handle_test_email' ) );
         add_action( 'wp_ajax_bqf_generate_pdf', array( $this, 'generate_pdf_view' ) );
     }
 
@@ -70,6 +71,7 @@ class BQF_Admin {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'QuoteFlow Settings', 'briones-quoteflow' ); ?></h1>
+            <?php settings_errors( 'bqf_messages' ); ?>
             <h2 class="nav-tab-wrapper">
                 <a href="?page=quoteflow&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'briones-quoteflow' ); ?></a>
                 <a href="?page=quoteflow&tab=fields" class="nav-tab <?php echo $active_tab == 'fields' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Fields', 'briones-quoteflow' ); ?></a>
@@ -177,6 +179,13 @@ class BQF_Admin {
                             ?></textarea>
                         </td>
                     </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Test Email Configuration', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <button type="submit" name="bqf_send_test_email" value="1" class="button button-secondary"><?php esc_html_e( 'Send Test Email', 'briones-quoteflow' ); ?></button>
+                            <p class="description"><?php esc_html_e( 'Click to send a test email to the Admin Notification Email address to verify your SMTP settings.', 'briones-quoteflow' ); ?></p>
+                        </td>
+                    </tr>
                 </table>
                 <?php endif; ?>
 
@@ -228,7 +237,7 @@ class BQF_Admin {
         $total_items = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name $where_clause" );
         $total_pages = ceil( $total_items / $per_page );
 
-        $quotes = $wpdb->get_results( "SELECT id, product_name, name, email, phone, status, created_at, email_log FROM $table_name $where_clause ORDER BY created_at DESC LIMIT $per_page OFFSET $offset" );
+        $quotes = $wpdb->get_results( "SELECT id, reference_id, product_name, name, email, phone, status, created_at, email_log FROM $table_name $where_clause ORDER BY created_at DESC LIMIT $per_page OFFSET $offset" );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Quotes Dashboard', 'briones-quoteflow' ); ?></h1>
@@ -313,11 +322,11 @@ class BQF_Admin {
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
+                        <th><?php esc_html_e( 'Reference', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Date', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Product', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Name', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Email', 'briones-quoteflow' ); ?></th>
-                        <th><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Status', 'briones-quoteflow' ); ?></th>
                         <th><?php esc_html_e( 'Email Logs', 'briones-quoteflow' ); ?></th>
                     </tr>
@@ -326,20 +335,20 @@ class BQF_Admin {
                     <?php if ( $quotes ) : ?>
                         <?php foreach ( $quotes as $quote ) : ?>
                             <tr>
-                                <td><?php echo esc_html( $quote->created_at ); ?></td>
                                 <td>
-                                    <strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes&action=view&id=' . $quote->id ) ); ?>"><?php echo esc_html( $quote->product_name ); ?></a></strong>
+                                    <strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes&action=view&id=' . $quote->id ) ); ?>"><?php echo esc_html( $quote->reference_id ); ?></a></strong>
                                 </td>
+                                <td><?php echo esc_html( date( 'M j, Y H:i', strtotime( $quote->created_at ) ) ); ?></td>
+                                <td><?php echo esc_html( $quote->product_name ); ?></td>
                                 <td><?php echo esc_html( $quote->name ); ?></td>
-                                <td><?php echo esc_html( $quote->email ); ?></td>
                                 <td>
-                                    <?php echo esc_html( $quote->phone ); ?>
+                                    <a href="mailto:<?php echo esc_attr( $quote->email ); ?>"><?php echo esc_html( $quote->email ); ?></a>
                                     <?php if ( ! empty( $quote->phone ) ) :
                                         $clean_phone = preg_replace('/[^0-9+]/', '', $quote->phone);
-                                        $wa_message = rawurlencode( "Hello {$quote->name},\n\nWe received your quote request for {$quote->product_name}." );
+                                        $wa_message = rawurlencode( "Hello {$quote->name},\n\nWe are following up on your quote request {$quote->reference_id} for {$quote->product_name}." );
                                         $wa_url = "https://wa.me/{$clean_phone}?text={$wa_message}";
                                     ?>
-                                        <br><a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" style="color: #25D366; text-decoration: none; font-weight: bold; font-size: 12px;">&#x1F4F1; WhatsApp</a>
+                                        <br><a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" style="color: #25D366; text-decoration: none; font-weight: bold; font-size: 12px;">&#x1F4F1; WhatsApp (<?php echo esc_html( $quote->phone ); ?>)</a>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -415,8 +424,8 @@ class BQF_Admin {
         $timeline = json_decode( $quote->timeline, true );
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e( 'Request #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></h1>
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Back to Quotes', 'briones-quoteflow' ); ?></a>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Quote Request ', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->reference_id ); ?></h1>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Back to Requests', 'briones-quoteflow' ); ?></a>
             <hr class="wp-header-end">
 
             <div id="poststuff">
@@ -610,6 +619,44 @@ class BQF_Admin {
         }
     }
 
+    public function handle_test_email() {
+        if ( isset( $_POST['bqf_send_test_email'] ) && isset( $_POST['option_page'] ) && $_POST['option_page'] === 'bqf_settings_group' ) {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return;
+            }
+
+            $to = get_option( 'bqf_notification_email', get_option( 'admin_email' ) );
+            $subject = __( 'Briones QuoteFlow - Test Email', 'briones-quoteflow' );
+            $message = '<div style="background:#f5f5f5; padding:30px; font-family:Helvetica,Arial,sans-serif;">';
+            $message .= '<div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05);">';
+            $message .= '<div style="background:#25D366; padding:20px; color:#ffffff; text-align:center;">';
+            $message .= '<h2 style="margin:0;">' . esc_html__( 'Test Email Successful', 'briones-quoteflow' ) . '</h2>';
+            $message .= '</div>';
+            $message .= '<div style="padding:30px; color:#333333; line-height:1.6;">';
+            $message .= '<p>' . esc_html__( 'Hello,', 'briones-quoteflow' ) . '</p>';
+            $message .= '<p>' . esc_html__( 'If you are reading this email, it means that your WordPress SMTP settings are correctly configured and Briones QuoteFlow can send HTML emails without issues.', 'briones-quoteflow' ) . '</p>';
+            $message .= '</div>';
+            $message .= '</div>';
+            $message .= '</div>';
+
+            $from_email = get_option( 'admin_email' );
+            $from_name = get_bloginfo( 'name' );
+
+            $headers = array(
+                'Content-Type: text/html; charset=UTF-8',
+                'From: ' . $from_name . ' <' . $from_email . '>'
+            );
+
+            $sent = wp_mail( $to, $subject, $message, $headers );
+
+            if ( $sent ) {
+                add_settings_error( 'bqf_messages', 'bqf_test_email_success', __( 'Test email sent successfully! Please check your inbox.', 'briones-quoteflow' ), 'updated' );
+            } else {
+                add_settings_error( 'bqf_messages', 'bqf_test_email_error', __( 'Failed to send test email. Please check your WordPress SMTP configuration.', 'briones-quoteflow' ), 'error' );
+            }
+        }
+    }
+
     public function handle_add_note() {
         if ( isset( $_POST['bqf_quote_id'] ) && isset( $_POST['bqf_internal_note'] ) && isset( $_POST['bqf_note_nonce'] ) && wp_verify_nonce( $_POST['bqf_note_nonce'], 'bqf_note_nonce' ) ) {
             if ( ! current_user_can( 'manage_options' ) ) {
@@ -733,7 +780,7 @@ class BQF_Admin {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title><?php esc_html_e( 'Quote Request #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></title>
+            <title><?php esc_html_e( 'Quote Request ', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->reference_id ); ?></title>
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
                 .header { border-bottom: 2px solid #dca54a; padding-bottom: 20px; margin-bottom: 30px; }
@@ -756,7 +803,7 @@ class BQF_Admin {
 
             <div class="header">
                 <h1><?php echo esc_html( get_bloginfo( 'name' ) ); ?></h1>
-                <p><?php esc_html_e( 'Quote Request #', 'briones-quoteflow' ); ?><?php echo str_pad( esc_html( $quote->id ), 6, '0', STR_PAD_LEFT ); ?></p>
+                <p><?php esc_html_e( 'Quote Request ', 'briones-quoteflow' ); ?><strong><?php echo esc_html( $quote->reference_id ); ?></strong></p>
                 <p><?php esc_html_e( 'Date:', 'briones-quoteflow' ); ?> <?php echo esc_html( date( 'F j, Y', strtotime( $quote->created_at ) ) ); ?></p>
             </div>
 

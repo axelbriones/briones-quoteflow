@@ -13,6 +13,7 @@ class BQF_Database {
 
         $sql = "CREATE TABLE $table_name (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            reference_id VARCHAR(50) DEFAULT '' NOT NULL,
             product_id BIGINT UNSIGNED NOT NULL,
             product_name VARCHAR(255) NOT NULL,
             product_sku VARCHAR(100) DEFAULT '',
@@ -53,6 +54,9 @@ class BQF_Database {
 
         $current_time = current_time( 'mysql' );
 
+        // Generate Reference ID (Random string until we insert, then we update it below)
+        $temp_ref = 'TMP-' . wp_generate_password( 6, false );
+
         // Extract extra product data safely if WooCommerce function is available
         $product_sku = '';
         $product_url = '';
@@ -79,9 +83,10 @@ class BQF_Database {
             'user' => 'System'
         );
 
-        return $wpdb->insert(
+        $inserted = $wpdb->insert(
             $table_name,
             array(
+                'reference_id'  => $temp_ref,
                 'product_id'    => sanitize_text_field( $data['product_id'] ),
                 'product_name'  => sanitize_text_field( $data['product_name'] ),
                 'product_sku'   => sanitize_text_field( $product_sku ),
@@ -100,5 +105,18 @@ class BQF_Database {
                 'updated_at'    => $current_time
             )
         );
+
+        if ( $inserted ) {
+            $insert_id = $wpdb->insert_id;
+            $reference_id = 'BQF-' . str_pad( $insert_id, 6, '0', STR_PAD_LEFT );
+            $wpdb->update(
+                $table_name,
+                array( 'reference_id' => $reference_id ),
+                array( 'id' => $insert_id )
+            );
+            return $insert_id;
+        }
+
+        return false;
     }
 }

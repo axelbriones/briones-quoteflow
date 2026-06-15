@@ -118,8 +118,17 @@ class BQF_Modal {
         }
 
         // Save to DB
-        $inserted = BQF_Database::insert_quote( $data );
-        $quote_id = $wpdb->insert_id;
+        $quote_id = BQF_Database::insert_quote( $data );
+
+        if ( ! $quote_id ) {
+            wp_send_json_error( array( 'message' => __( 'Something went wrong while saving your request. Please try again later.', 'briones-quoteflow' ) ) );
+        }
+
+        $inserted = true;
+
+        // Pass ID and Reference ID down to email
+        $data['quote_id'] = $quote_id;
+        $data['reference_id'] = 'BQF-' . str_pad( $quote_id, 6, '0', STR_PAD_LEFT );
 
         // Send Email
         $emailed = BQF_Email::send_quote_email( $data );
