@@ -236,11 +236,11 @@ class BQF_Admin {
             <!-- Professional Metrics Row -->
             <div style="display:flex; gap:15px; margin-bottom: 20px; flex-wrap:wrap;">
                 <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px;">
-                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Total Leads', 'briones-quoteflow' ); ?></h3>
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Total Requests', 'briones-quoteflow' ); ?></h3>
                     <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $total_quotes ); ?></p>
                 </div>
                 <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #2271b1;">
-                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'New Leads', 'briones-quoteflow' ); ?></h3>
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'New Requests', 'briones-quoteflow' ); ?></h3>
                     <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $new_quotes ); ?></p>
                 </div>
                 <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #00a32a;">
@@ -281,14 +281,14 @@ class BQF_Admin {
                 <form method="get" action="">
                     <input type="hidden" name="page" value="quoteflow-quotes" />
                     <p class="search-box" style="margin:0;">
-                        <label class="screen-reader-text" for="post-search-input"><?php esc_html_e( 'Search Leads:', 'briones-quoteflow' ); ?></label>
+                        <label class="screen-reader-text" for="post-search-input"><?php esc_html_e( 'Search Requests:', 'briones-quoteflow' ); ?></label>
                         <input type="search" id="post-search-input" name="s" value="<?php echo esc_attr( $search_term ); ?>">
-                        <input type="submit" id="search-submit" class="button" value="<?php esc_attr_e( 'Search Leads', 'briones-quoteflow' ); ?>">
+                        <input type="submit" id="search-submit" class="button" value="<?php esc_attr_e( 'Search Requests', 'briones-quoteflow' ); ?>">
                     </p>
                 </form>
             </div>
 
-            <p><em><?php esc_html_e( 'Click on the Product Name to view full Lead details.', 'briones-quoteflow' ); ?></em></p>
+            <p><em><?php esc_html_e( 'Click on the Product Name to view full Request details.', 'briones-quoteflow' ); ?></em></p>
 
             <div class="tablenav top">
                 <div class="tablenav-pages">
@@ -364,7 +364,7 @@ class BQF_Admin {
                                     <?php endif; ?>
                                     <br>
                                     <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button button-small" style="margin-top:5px;"><?php esc_html_e( 'Print PDF', 'briones-quoteflow' ); ?></a>
-                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button button-small" style="margin-top:5px; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this lead? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete', 'briones-quoteflow' ); ?></a>
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button button-small" style="margin-top:5px; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this request? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete', 'briones-quoteflow' ); ?></a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -408,14 +408,14 @@ class BQF_Admin {
         $quote = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $quote_id ) );
 
         if ( ! $quote ) {
-            echo '<div class="wrap"><h1>Lead Not Found</h1></div>';
+            echo '<div class="wrap"><h1>Request Not Found</h1></div>';
             return;
         }
 
         $timeline = json_decode( $quote->timeline, true );
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e( 'Lead #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></h1>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Request #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></h1>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Back to Quotes', 'briones-quoteflow' ); ?></a>
             <hr class="wp-header-end">
 
@@ -510,7 +510,7 @@ class BQF_Admin {
                                 <form method="post" action="">
                                     <?php wp_nonce_field( 'bqf_note_nonce', 'bqf_note_nonce' ); ?>
                                     <input type="hidden" name="bqf_quote_id" value="<?php echo esc_attr( $quote->id ); ?>">
-                                    <textarea name="bqf_internal_note" rows="3" style="width:100%;" placeholder="<?php esc_attr_e( 'Add a private note about this lead...', 'briones-quoteflow' ); ?>"></textarea>
+                                    <textarea name="bqf_internal_note" rows="3" style="width:100%;" placeholder="<?php esc_attr_e( 'Add a private note about this request...', 'briones-quoteflow' ); ?>"></textarea>
                                     <p><button type="submit" class="button"><?php esc_html_e( 'Add Note', 'briones-quoteflow' ); ?></button></p>
                                 </form>
                             </div>
@@ -544,7 +544,7 @@ class BQF_Admin {
                                 </p>
                                 <hr>
                                 <p style="text-align:center;">
-                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button" style="width:100%; text-align:center; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this lead? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete Lead', 'briones-quoteflow' ); ?></a>
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button" style="width:100%; text-align:center; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this request? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete Request', 'briones-quoteflow' ); ?></a>
                                 </p>
                             </div>
                         </div>

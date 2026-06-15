@@ -37,21 +37,47 @@ class BQF_Email {
             $subject_template
         );
 
-        $message = "Product: {$product_name}\n";
-        $message .= "Price: {$product_price}\n";
-        if ( ! empty( $sku ) ) {
-            $message .= "SKU: {$sku}\n";
-        }
-        $message .= "Product URL: {$product_url}\n";
+        $message  = '<div style="background:#f5f5f5; padding:30px; font-family:Helvetica,Arial,sans-serif;">';
+        $message .= '<div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05);">';
+        $message .= '<div style="background:#dca54a; padding:20px; color:#ffffff; text-align:center;">';
+        $message .= '<h2 style="margin:0;">' . esc_html__( 'New Quote Request', 'briones-quoteflow' ) . '</h2>';
+        $message .= '</div>';
+        $message .= '<div style="padding:30px; color:#333333;">';
+
         if ( ! empty( $image_url ) ) {
-            $message .= "Featured Image: {$image_url}\n";
+            $message .= '<div style="text-align:center; margin-bottom:20px;"><img src="' . esc_url( $image_url ) . '" style="max-width:200px; border-radius:4px;" /></div>';
         }
-        $message .= "\nCustomer:\n{$full_name}\n\n";
-        $message .= "Email:\n{$email}\n\n";
-        $message .= "Phone:\n{$phone}\n\n";
-        $message .= "Message:\n{$message_text}\n";
+
+        $message .= '<h3 style="border-bottom:1px solid #eeeeee; padding-bottom:10px; margin-top:0;">' . esc_html__( 'Product Details', 'briones-quoteflow' ) . '</h3>';
+        $message .= '<p><strong>' . esc_html__( 'Product:', 'briones-quoteflow' ) . '</strong> <a href="' . esc_url( $product_url ) . '" style="color:#dca54a;">' . esc_html( $product_name ) . '</a></p>';
+        $message .= '<p><strong>' . esc_html__( 'Price:', 'briones-quoteflow' ) . '</strong> ' . esc_html( $product_price ) . '</p>';
+
+        if ( ! empty( $sku ) ) {
+            $message .= '<p><strong>' . esc_html__( 'SKU:', 'briones-quoteflow' ) . '</strong> ' . esc_html( $sku ) . '</p>';
+        }
+
+        $message .= '<h3 style="border-bottom:1px solid #eeeeee; padding-bottom:10px; margin-top:30px;">' . esc_html__( 'Customer Details', 'briones-quoteflow' ) . '</h3>';
+        $message .= '<p><strong>' . esc_html__( 'Name:', 'briones-quoteflow' ) . '</strong> ' . esc_html( $full_name ) . '</p>';
+        $message .= '<p><strong>' . esc_html__( 'Email:', 'briones-quoteflow' ) . '</strong> ' . esc_html( $email ) . '</p>';
+
+        if ( ! empty( $phone ) ) {
+            $message .= '<p><strong>' . esc_html__( 'Phone:', 'briones-quoteflow' ) . '</strong> ' . esc_html( $phone ) . '</p>';
+        }
+
+        if ( ! empty( $message_text ) ) {
+            $message .= '<h3 style="border-bottom:1px solid #eeeeee; padding-bottom:10px; margin-top:30px;">' . esc_html__( 'Message', 'briones-quoteflow' ) . '</h3>';
+            $message .= '<div style="background:#f9f9f9; padding:15px; border-left:4px solid #dca54a;">' . nl2br( esc_html( $message_text ) ) . '</div>';
+        }
+
+        $message .= '</div>';
+        $message .= '<div style="background:#f9f9f9; padding:15px; text-align:center; font-size:12px; color:#999999;">';
+        $message .= esc_html__( 'Powered by Briones QuoteFlow', 'briones-quoteflow' );
+        $message .= '</div>';
+        $message .= '</div>';
+        $message .= '</div>';
 
         $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
             'Reply-To: ' . $full_name . ' <' . $email . '>'
         );
 
@@ -73,16 +99,31 @@ class BQF_Email {
 
         $default_body = "Hello {customer_name},\n\nThank you for contacting us.\n\nProduct: {product_name}\n\nOur team will review your request and contact you shortly.";
         $body_template = get_option( 'bqf_email_customer_body', $default_body );
-        $message = str_replace(
+        $body_content = str_replace(
             array( '{product_name}', '{customer_name}', '{product_price}' ),
             array( $product_name, $full_name, $product_price ),
             $body_template
         );
 
+        $message  = '<div style="background:#f5f5f5; padding:30px; font-family:Helvetica,Arial,sans-serif;">';
+        $message .= '<div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05);">';
+        $message .= '<div style="background:#dca54a; padding:20px; color:#ffffff; text-align:center;">';
+        $message .= '<h2 style="margin:0;">' . esc_html__( 'Quote Request Received', 'briones-quoteflow' ) . '</h2>';
+        $message .= '</div>';
+        $message .= '<div style="padding:30px; color:#333333; line-height:1.6;">';
+        $message .= nl2br( esc_html( $body_content ) );
+        $message .= '</div>';
+        $message .= '<div style="background:#f9f9f9; padding:15px; text-align:center; font-size:12px; color:#999999;">';
+        $message .= esc_html( get_bloginfo( 'name' ) );
+        $message .= '</div>';
+        $message .= '</div>';
+        $message .= '</div>';
+
         $from_email = get_option( 'admin_email' );
         $from_name = get_bloginfo( 'name' );
 
         $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
             'From: ' . $from_name . ' <' . $from_email . '>'
         );
 

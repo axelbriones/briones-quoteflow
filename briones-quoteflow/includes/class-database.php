@@ -75,7 +75,7 @@ class BQF_Database {
         $timeline = array();
         $timeline[] = array(
             'time' => current_time( 'mysql' ),
-            'action' => 'Lead Created',
+            'action' => 'Request Created',
             'user' => 'System'
         );
 
