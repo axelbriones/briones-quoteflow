@@ -45,7 +45,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php if ( get_option( 'bqf_field_phone', 1 ) ) : ?>
             <div class="bqf-form-group">
                 <label for="bqf_phone"><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?> *</label>
-                <input type="tel" id="bqf_phone" name="phone" required>
+                <input type="tel" id="bqf_phone" name="phone" pattern="[0-9\+\-\s\(\)]+" title="<?php esc_attr_e('Valid phone number formats allowed', 'briones-quoteflow'); ?>" required>
             </div>
             <?php endif; ?>
 

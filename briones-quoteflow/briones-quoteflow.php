@@ -42,6 +42,8 @@ class Briones_QuoteFlow {
     }
 
     public function init() {
+        load_plugin_textdomain( 'briones-quoteflow', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
         // Check if WooCommerce is active
         if ( class_exists( 'WooCommerce' ) ) {
             new BQF_Admin();

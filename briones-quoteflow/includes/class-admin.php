@@ -11,6 +11,7 @@ class BQF_Admin {
         add_action( 'admin_init', array( $this, 'handle_csv_export' ) );
         add_action( 'admin_init', array( $this, 'handle_status_update' ) );
         add_action( 'admin_init', array( $this, 'handle_add_note' ) );
+        add_action( 'admin_init', array( $this, 'handle_delete_quote' ) );
         add_action( 'wp_ajax_bqf_generate_pdf', array( $this, 'generate_pdf_view' ) );
     }
 
@@ -301,7 +302,8 @@ class BQF_Admin {
                                         <span style="font-size: 11px; color: #aaa;">No logs</span>
                                     <?php endif; ?>
                                     <br>
-                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button button-small" style="margin-top:5px;">Print PDF</a>
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button button-small" style="margin-top:5px;"><?php esc_html_e( 'Print PDF', 'briones-quoteflow' ); ?></a>
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button button-small" style="margin-top:5px; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this lead? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete', 'briones-quoteflow' ); ?></a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -456,6 +458,10 @@ class BQF_Admin {
                                 <p style="text-align:center;">
                                     <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button" style="width:100%; text-align:center;"><?php esc_html_e( 'Print PDF', 'briones-quoteflow' ); ?></a>
                                 </p>
+                                <hr>
+                                <p style="text-align:center;">
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=quoteflow-quotes&action=delete&quote_id=' . $quote->id ), 'bqf_delete_nonce' ) ); ?>" class="button" style="width:100%; text-align:center; color:#d63638; border-color:#d63638;" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this lead? This action cannot be undone.', 'briones-quoteflow' ); ?>');"><?php esc_html_e( 'Delete Lead', 'briones-quoteflow' ); ?></a>
+                                </p>
                             </div>
                         </div>
 
@@ -557,6 +563,27 @@ class BQF_Admin {
             }
 
             wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'action' => 'view', 'id' => $quote_id, 'note_added' => 'true' ), admin_url( 'admin.php' ) ) );
+            exit;
+        }
+    }
+
+    public function handle_delete_quote() {
+        if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['quote_id'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'bqf_delete_nonce' ) ) {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return;
+            }
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'bqf_quotes';
+            $quote_id = intval( $_GET['quote_id'] );
+
+            $wpdb->delete(
+                $table_name,
+                array( 'id' => $quote_id ),
+                array( '%d' )
+            );
+
+            wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'deleted' => 'true' ), admin_url( 'admin.php' ) ) );
             exit;
         }
     }
