@@ -19,8 +19,9 @@ class BQF_Modal {
         wp_enqueue_script( 'bqf-frontend-js', BQF_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), BQF_VERSION, true );
 
         wp_localize_script( 'bqf-frontend-js', 'bqf_ajax', array(
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'bqf_quote_nonce' )
+            'ajax_url'            => admin_url( 'admin-ajax.php' ),
+            'nonce'               => wp_create_nonce( 'bqf_quote_nonce' ),
+            'i18n_select_options' => __( 'Please select product options before requesting a quote.', 'briones-quoteflow' )
         ) );
     }
 

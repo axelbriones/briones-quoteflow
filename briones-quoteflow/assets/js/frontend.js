@@ -12,7 +12,9 @@ jQuery(document).ready(function($) {
         if ( isVariable == '1' && $('.variations_form').length > 0 ) {
             var variationId = $('input[name="variation_id"]').val();
             if ( !variationId || variationId == '0' || variationId == '' ) {
-                alert('Please select product options before requesting a quote.');
+                // bqf_ajax.i18n_select_options is populated via wp_localize_script if needed, fallback for now:
+                var alertMsg = typeof bqf_ajax.i18n_select_options !== 'undefined' ? bqf_ajax.i18n_select_options : 'Please select product options before requesting a quote.';
+                alert(alertMsg);
                 return;
             }
 

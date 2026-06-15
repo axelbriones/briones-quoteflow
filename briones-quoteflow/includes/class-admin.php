@@ -145,13 +145,13 @@ class BQF_Admin {
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Product</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Status</th>
-                        <th>Email Logs</th>
+                        <th><?php esc_html_e( 'Date', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Product', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Name', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Email', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Status', 'briones-quoteflow' ); ?></th>
+                        <th><?php esc_html_e( 'Email Logs', 'briones-quoteflow' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -294,7 +294,7 @@ class BQF_Admin {
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>Quote Request #<?php echo esc_html( $quote->id ); ?></title>
+            <title><?php esc_html_e( 'Quote Request #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></title>
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
                 .header { border-bottom: 2px solid #dca54a; padding-bottom: 20px; margin-bottom: 30px; }
@@ -312,48 +312,48 @@ class BQF_Admin {
         </head>
         <body>
             <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-                <button onclick="window.print();" style="padding: 10px 20px; background: #dca54a; color: #fff; border: none; cursor: pointer; border-radius: 4px;">Print / Save as PDF</button>
+                <button onclick="window.print();" style="padding: 10px 20px; background: #dca54a; color: #fff; border: none; cursor: pointer; border-radius: 4px;"><?php esc_html_e( 'Print / Save as PDF', 'briones-quoteflow' ); ?></button>
             </div>
 
             <div class="header">
                 <h1><?php echo esc_html( get_bloginfo( 'name' ) ); ?></h1>
-                <p>Quote Request #<?php echo str_pad( esc_html( $quote->id ), 6, '0', STR_PAD_LEFT ); ?></p>
-                <p>Date: <?php echo esc_html( date( 'F j, Y', strtotime( $quote->created_at ) ) ); ?></p>
+                <p><?php esc_html_e( 'Quote Request #', 'briones-quoteflow' ); ?><?php echo str_pad( esc_html( $quote->id ), 6, '0', STR_PAD_LEFT ); ?></p>
+                <p><?php esc_html_e( 'Date:', 'briones-quoteflow' ); ?> <?php echo esc_html( date( 'F j, Y', strtotime( $quote->created_at ) ) ); ?></p>
             </div>
 
             <div class="section">
-                <h2>Product Details</h2>
+                <h2><?php esc_html_e( 'Product Details', 'briones-quoteflow' ); ?></h2>
                 <table>
                     <tr>
-                        <th>Product</th>
+                        <th><?php esc_html_e( 'Product', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->product_name ); ?></td>
                     </tr>
                     <tr>
-                        <th>Price</th>
+                        <th><?php esc_html_e( 'Price', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->product_price ); ?></td>
                     </tr>
                 </table>
             </div>
 
             <div class="section">
-                <h2>Customer Details</h2>
+                <h2><?php esc_html_e( 'Customer Details', 'briones-quoteflow' ); ?></h2>
                 <table>
                     <tr>
-                        <th>Name</th>
+                        <th><?php esc_html_e( 'Name', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->name ); ?></td>
                     </tr>
                     <?php if ( ! empty( $quote->company ) ) : ?>
                     <tr>
-                        <th>Company</th>
+                        <th><?php esc_html_e( 'Company', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->company ); ?></td>
                     </tr>
                     <?php endif; ?>
                     <tr>
-                        <th>Email</th>
+                        <th><?php esc_html_e( 'Email', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->email ); ?></td>
                     </tr>
                     <tr>
-                        <th>Phone</th>
+                        <th><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?></th>
                         <td><?php echo esc_html( $quote->phone ); ?></td>
                     </tr>
                 </table>
@@ -361,13 +361,13 @@ class BQF_Admin {
 
             <?php if ( ! empty( $quote->message ) ) : ?>
             <div class="section">
-                <h2>Additional Message</h2>
+                <h2><?php esc_html_e( 'Additional Message', 'briones-quoteflow' ); ?></h2>
                 <p style="background: #f9f9f9; padding: 15px; border: 1px solid #eee;"><?php echo nl2br( esc_html( $quote->message ) ); ?></p>
             </div>
             <?php endif; ?>
 
             <div style="margin-top: 50px; text-align: center; color: #999; font-size: 12px;">
-                <p>Thank you for your interest.</p>
+                <p><?php esc_html_e( 'Thank you for your interest.', 'briones-quoteflow' ); ?></p>
             </div>
 
             <script>
