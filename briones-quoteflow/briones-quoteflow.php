@@ -17,6 +17,7 @@ define( 'BQF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 // Include necessary files
 require_once BQF_PLUGIN_DIR . 'includes/class-database.php';
+require_once BQF_PLUGIN_DIR . 'includes/class-logger.php';
 require_once BQF_PLUGIN_DIR . 'includes/class-admin.php';
 require_once BQF_PLUGIN_DIR . 'includes/class-email.php';
 require_once BQF_PLUGIN_DIR . 'includes/class-modal.php';

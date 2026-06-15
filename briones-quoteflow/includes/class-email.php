@@ -30,7 +30,12 @@ class BQF_Email {
             }
         }
 
-        $subject = sprintf( 'New Quote Request - %s', $product_name );
+        $subject_template = get_option( 'bqf_email_admin_subject', 'New Quote Request - {product_name}' );
+        $subject = str_replace(
+            array( '{product_name}', '{customer_name}', '{product_price}' ),
+            array( $product_name, $full_name, $product_price ),
+            $subject_template
+        );
 
         $message = "Product: {$product_name}\n";
         $message .= "Price: {$product_price}\n";
@@ -56,13 +61,23 @@ class BQF_Email {
     public static function send_customer_confirmation( $data ) {
         $to = sanitize_email( $data['email'] );
         $product_name = sanitize_text_field( $data['product_name'] );
+        $full_name = sanitize_text_field( $data['full_name'] );
+        $product_price = sanitize_text_field( $data['product_price'] );
 
-        $subject = __( "We've received your quote request", 'briones-quoteflow' );
+        $subject_template = get_option( 'bqf_email_customer_subject', 'We have received your quote request' );
+        $subject = str_replace(
+            array( '{product_name}', '{customer_name}', '{product_price}' ),
+            array( $product_name, $full_name, $product_price ),
+            $subject_template
+        );
 
-        $message = __( "Thank you for contacting us.", 'briones-quoteflow' ) . "\n\n";
-        $message .= __( "Product:", 'briones-quoteflow' ) . "\n";
-        $message .= "{$product_name}\n\n";
-        $message .= __( "Our team will review your request and contact you shortly.", 'briones-quoteflow' ) . "\n";
+        $default_body = "Hello {customer_name},\n\nThank you for contacting us.\n\nProduct: {product_name}\n\nOur team will review your request and contact you shortly.";
+        $body_template = get_option( 'bqf_email_customer_body', $default_body );
+        $message = str_replace(
+            array( '{product_name}', '{customer_name}', '{product_price}' ),
+            array( $product_name, $full_name, $product_price ),
+            $body_template
+        );
 
         $from_email = get_option( 'admin_email' );
         $from_name = get_bloginfo( 'name' );

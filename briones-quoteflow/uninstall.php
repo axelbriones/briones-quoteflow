@@ -20,6 +20,13 @@ delete_option( 'bqf_catalog_mode' );
 delete_option( 'bqf_field_company' );
 delete_option( 'bqf_field_phone' );
 delete_option( 'bqf_field_message' );
+delete_option( 'bqf_btn_color_primary' );
+delete_option( 'bqf_btn_color_hover' );
+delete_option( 'bqf_btn_border_radius' );
+delete_option( 'bqf_redirect_url' );
+delete_option( 'bqf_email_admin_subject' );
+delete_option( 'bqf_email_customer_subject' );
+delete_option( 'bqf_email_customer_body' );
 
 // Optionally drop custom database table (commented out by default to prevent accidental data loss,
 // but fully ready if you want strict cleanup).

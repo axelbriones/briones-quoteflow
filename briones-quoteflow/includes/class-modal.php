@@ -16,12 +16,31 @@ class BQF_Modal {
 
     public function enqueue_scripts() {
         wp_enqueue_style( 'bqf-frontend-css', BQF_PLUGIN_URL . 'assets/css/frontend.css', array(), BQF_VERSION );
+
+        $primary_color = get_option( 'bqf_btn_color_primary', '#dca54a' );
+        $hover_color   = get_option( 'bqf_btn_color_hover', '#f27305' );
+        $border_radius = get_option( 'bqf_btn_border_radius', '50' );
+
+        $custom_css = "
+            .bqf-quote-button, .bqf-submit-button {
+                background-color: {$primary_color} !important;
+                border-color: {$primary_color} !important;
+                border-radius: {$border_radius}px !important;
+            }
+            .bqf-quote-button:hover, .bqf-submit-button:hover {
+                background-color: {$hover_color} !important;
+                border-color: {$hover_color} !important;
+            }
+        ";
+        wp_add_inline_style( 'bqf-frontend-css', $custom_css );
+
         wp_enqueue_script( 'bqf-frontend-js', BQF_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), BQF_VERSION, true );
 
         wp_localize_script( 'bqf-frontend-js', 'bqf_ajax', array(
             'ajax_url'            => admin_url( 'admin-ajax.php' ),
             'nonce'               => wp_create_nonce( 'bqf_quote_nonce' ),
-            'i18n_select_options' => __( 'Please select product options before requesting a quote.', 'briones-quoteflow' )
+            'i18n_select_options' => __( 'Please select product options before requesting a quote.', 'briones-quoteflow' ),
+            'redirect_url'        => get_option( 'bqf_redirect_url', '' )
         ) );
     }
 
@@ -83,8 +102,22 @@ class BQF_Modal {
             'message'       => $message_content
         );
 
-        // Save to DB (We get the ID back if we use a modified insert_quote)
         global $wpdb;
+        $table_name = $wpdb->prefix . 'bqf_quotes';
+
+        // Duplicate Detection
+        $user_email = sanitize_email( $data['email'] );
+        $pid = intval( $data['product_id'] );
+        $duplicate = $wpdb->get_row( $wpdb->prepare(
+            "SELECT id FROM $table_name WHERE email = %s AND product_id = %d AND DATE(created_at) = CURDATE()",
+            $user_email, $pid
+        ) );
+
+        if ( $duplicate ) {
+            wp_send_json_error( array( 'message' => __( 'You have already requested a quote for this product today.', 'briones-quoteflow' ) ) );
+        }
+
+        // Save to DB
         $inserted = BQF_Database::insert_quote( $data );
         $quote_id = $wpdb->insert_id;
 
@@ -92,6 +125,10 @@ class BQF_Modal {
         $emailed = BQF_Email::send_quote_email( $data );
 
         $log_message = $emailed ? 'Admin Email Sent' : 'Admin Email Failed';
+
+        if ( $quote_id && class_exists( 'BQF_Logger' ) ) {
+            BQF_Logger::log_timeline( $quote_id, $emailed ? 'Admin Email Sent' : 'Admin Email Failed' );
+        }
 
         // Send Confirmation
         $customer_emailed = false;
@@ -105,6 +142,10 @@ class BQF_Modal {
                     array( 'email_log' => $log_message ),
                     array( 'id' => $quote_id )
                 );
+
+                if ( class_exists( 'BQF_Logger' ) ) {
+                    BQF_Logger::log_timeline( $quote_id, $customer_emailed ? 'Customer Confirmation Email Sent' : 'Customer Confirmation Email Failed' );
+                }
             }
 
             // Increment rate limit attempts

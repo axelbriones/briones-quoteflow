@@ -98,12 +98,16 @@ jQuery(document).ready(function($) {
 
         $.post(bqf_ajax.ajax_url, data, function(response) {
             if (response.success) {
-                $messageDiv.addClass('success').text(response.data.message).show();
-                $form[0].reset();
-                setTimeout(function() {
-                    $('#bqf-quote-modal').css('display', 'none');
-                    $messageDiv.hide();
-                }, 3000);
+                if ( bqf_ajax.redirect_url && bqf_ajax.redirect_url !== '' ) {
+                    window.location.href = bqf_ajax.redirect_url;
+                } else {
+                    $messageDiv.addClass('success').text(response.data.message).show();
+                    $form[0].reset();
+                    setTimeout(function() {
+                        $('#bqf-quote-modal').css('display', 'none');
+                        $messageDiv.hide();
+                    }, 3000);
+                }
             } else {
                 $messageDiv.addClass('error').text(response.data.message).show();
             }

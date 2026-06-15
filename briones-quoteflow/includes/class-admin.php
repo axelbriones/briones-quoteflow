@@ -10,6 +10,7 @@ class BQF_Admin {
         add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'admin_init', array( $this, 'handle_csv_export' ) );
         add_action( 'admin_init', array( $this, 'handle_status_update' ) );
+        add_action( 'admin_init', array( $this, 'handle_add_note' ) );
         add_action( 'wp_ajax_bqf_generate_pdf', array( $this, 'generate_pdf_view' ) );
     }
 
@@ -46,9 +47,23 @@ class BQF_Admin {
         register_setting( 'bqf_settings_group', 'bqf_field_company' );
         register_setting( 'bqf_settings_group', 'bqf_field_phone' );
         register_setting( 'bqf_settings_group', 'bqf_field_message' );
+
+        // Visual and Redirect settings
+        register_setting( 'bqf_settings_group', 'bqf_btn_color_primary' );
+        register_setting( 'bqf_settings_group', 'bqf_btn_color_hover' );
+        register_setting( 'bqf_settings_group', 'bqf_btn_border_radius' );
+        register_setting( 'bqf_settings_group', 'bqf_redirect_url' );
+
+        // Email Templates
+        register_setting( 'bqf_settings_group', 'bqf_email_admin_subject' );
+        register_setting( 'bqf_settings_group', 'bqf_email_customer_subject' );
+        register_setting( 'bqf_settings_group', 'bqf_email_customer_body' );
     }
 
     public function settings_page() {
+        // Enqueue color picker
+        wp_enqueue_style( 'wp-color-picker' );
+        wp_enqueue_script( 'wp-color-picker' );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'QuoteFlow Settings', 'briones-quoteflow' ); ?></h1>
@@ -56,7 +71,7 @@ class BQF_Admin {
                 <?php settings_fields( 'bqf_settings_group' ); ?>
                 <?php do_settings_sections( 'bqf_settings_group' ); ?>
 
-                <h2><?php esc_html_e( 'General Settings', 'briones-quoteflow' ); ?></h2>
+                <h2 class="title"><?php esc_html_e( 'General Settings', 'briones-quoteflow' ); ?></h2>
                 <table class="form-table">
                     <tr valign="top">
                         <th scope="row"><?php esc_html_e( 'Notification Email', 'briones-quoteflow' ); ?></th>
@@ -82,9 +97,34 @@ class BQF_Admin {
                         <th scope="row"><?php esc_html_e( 'Catalog Mode', 'briones-quoteflow' ); ?></th>
                         <td><input type="checkbox" name="bqf_catalog_mode" value="1" <?php checked( 1, get_option('bqf_catalog_mode', 0), true ); ?> /> <?php esc_html_e( 'Check to hide cart icons, mini-cart, and prevent checkout access globally.', 'briones-quoteflow' ); ?></td>
                     </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Thank You Page URL', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <input type="url" name="bqf_redirect_url" value="<?php echo esc_url( get_option('bqf_redirect_url', '') ); ?>" class="regular-text" placeholder="https://..." />
+                            <p class="description"><?php esc_html_e( 'Leave empty to just show the success message in the modal.', 'briones-quoteflow' ); ?></p>
+                        </td>
+                    </tr>
                 </table>
 
-                <h2><?php esc_html_e( 'Form Fields Configuration', 'briones-quoteflow' ); ?></h2>
+                <h2 class="title"><?php esc_html_e( 'Visual Settings', 'briones-quoteflow' ); ?></h2>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Primary Button Color', 'briones-quoteflow' ); ?></th>
+                        <td><input type="text" name="bqf_btn_color_primary" value="<?php echo esc_attr( get_option('bqf_btn_color_primary', '#dca54a') ); ?>" class="bqf-color-picker" /></td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Hover Button Color', 'briones-quoteflow' ); ?></th>
+                        <td><input type="text" name="bqf_btn_color_hover" value="<?php echo esc_attr( get_option('bqf_btn_color_hover', '#f27305') ); ?>" class="bqf-color-picker" /></td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Button Border Radius', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <input type="number" name="bqf_btn_border_radius" value="<?php echo esc_attr( get_option('bqf_btn_border_radius', '50') ); ?>" class="small-text" /> px
+                        </td>
+                    </tr>
+                </table>
+
+                <h2 class="title"><?php esc_html_e( 'Form Fields Configuration', 'briones-quoteflow' ); ?></h2>
                 <p><?php esc_html_e( 'Select which fields should be visible in the quote request form (Name and Email are always required).', 'briones-quoteflow' ); ?></p>
                 <table class="form-table">
                     <tr valign="top">
@@ -101,9 +141,40 @@ class BQF_Admin {
                     </tr>
                 </table>
 
+                <h2 class="title"><?php esc_html_e( 'Email Templates', 'briones-quoteflow' ); ?></h2>
+                <p><?php esc_html_e( 'Available Variables: {product_name}, {customer_name}, {product_price}', 'briones-quoteflow' ); ?></p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Admin Notification Subject', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <input type="text" name="bqf_email_admin_subject" value="<?php echo esc_attr( get_option('bqf_email_admin_subject', 'New Quote Request - {product_name}') ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Customer Confirmation Subject', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <input type="text" name="bqf_email_customer_subject" value="<?php echo esc_attr( get_option('bqf_email_customer_subject', 'We have received your quote request') ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Customer Confirmation Body', 'briones-quoteflow' ); ?></th>
+                        <td>
+                            <textarea name="bqf_email_customer_body" rows="5" class="large-text"><?php
+                                $default_body = "Hello {customer_name},\n\nThank you for contacting us.\n\nProduct: {product_name}\n\nOur team will review your request and contact you shortly.";
+                                echo esc_textarea( get_option('bqf_email_customer_body', $default_body) );
+                            ?></textarea>
+                        </td>
+                    </tr>
+                </table>
+
                 <?php submit_button(); ?>
             </form>
         </div>
+        <script>
+            jQuery(document).ready(function($){
+                $('.bqf-color-picker').wpColorPicker();
+            });
+        </script>
         <?php
     }
 
@@ -111,29 +182,63 @@ class BQF_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'bqf_quotes';
 
-        // Metrics
-        $total_quotes = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name" );
-        $today_quotes = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE DATE(created_at) = CURDATE()" );
-        $month_quotes = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())" );
+        // Router for Single View vs List View
+        if ( isset( $_GET['action'] ) && $_GET['action'] === 'view' && ! empty( $_GET['id'] ) ) {
+            $this->single_quote_view( intval( $_GET['id'] ) );
+            return;
+        }
 
-        $quotes = $wpdb->get_results( "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT 100" );
+        // Advanced Metrics
+        $total_quotes = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $table_name" );
+        $won_quotes = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE status = %s", 'Won' ) );
+        $lost_quotes = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE status = %s", 'Lost' ) );
+        $new_quotes = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table_name WHERE status = %s", 'New' ) );
+
+        $conversion_rate = $total_quotes > 0 ? round( ($won_quotes / $total_quotes) * 100, 1 ) : 0;
+
+        $top_products = $wpdb->get_results( "SELECT product_name, COUNT(*) as count FROM $table_name GROUP BY product_id ORDER BY count DESC LIMIT 5" );
+
+        $quotes = $wpdb->get_results( "SELECT id, product_name, name, email, phone, status, created_at, email_log FROM $table_name ORDER BY created_at DESC LIMIT 100" );
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Quotes Dashboard', 'briones-quoteflow' ); ?></h1>
 
-            <div style="display:flex; gap:20px; margin-bottom: 20px;">
-                <div style="background:#fff; padding:15px; border:1px solid #ccc; border-radius:5px; text-align:center; min-width: 150px;">
-                    <h3 style="margin:0;"><?php esc_html_e( 'Today', 'briones-quoteflow' ); ?></h3>
-                    <p style="font-size:24px; margin:10px 0 0 0; font-weight:bold;"><?php echo esc_html( $today_quotes ); ?></p>
+            <!-- Professional Metrics Row -->
+            <div style="display:flex; gap:15px; margin-bottom: 20px; flex-wrap:wrap;">
+                <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px;">
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Total Leads', 'briones-quoteflow' ); ?></h3>
+                    <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $total_quotes ); ?></p>
                 </div>
-                <div style="background:#fff; padding:15px; border:1px solid #ccc; border-radius:5px; text-align:center; min-width: 150px;">
-                    <h3 style="margin:0;"><?php esc_html_e( 'This Month', 'briones-quoteflow' ); ?></h3>
-                    <p style="font-size:24px; margin:10px 0 0 0; font-weight:bold;"><?php echo esc_html( $month_quotes ); ?></p>
+                <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #2271b1;">
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'New Leads', 'briones-quoteflow' ); ?></h3>
+                    <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $new_quotes ); ?></p>
                 </div>
-                <div style="background:#fff; padding:15px; border:1px solid #ccc; border-radius:5px; text-align:center; min-width: 150px;">
-                    <h3 style="margin:0;"><?php esc_html_e( 'Total', 'briones-quoteflow' ); ?></h3>
-                    <p style="font-size:24px; margin:10px 0 0 0; font-weight:bold;"><?php echo esc_html( $total_quotes ); ?></p>
+                <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #00a32a;">
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Won Deals', 'briones-quoteflow' ); ?></h3>
+                    <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $won_quotes ); ?></p>
                 </div>
+                <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #d63638;">
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Lost Deals', 'briones-quoteflow' ); ?></h3>
+                    <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $lost_quotes ); ?></p>
+                </div>
+                <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; text-align:center; flex:1; min-width:120px; border-top: 3px solid #dca54a;">
+                    <h3 style="margin:0; font-size:14px; color:#646970;"><?php esc_html_e( 'Conversion Rate', 'briones-quoteflow' ); ?></h3>
+                    <p style="font-size:28px; margin:5px 0 0 0; font-weight:600; color:#1d2327;"><?php echo esc_html( $conversion_rate ); ?>%</p>
+                </div>
+            </div>
+
+            <!-- Top Products -->
+            <div style="background:#fff; padding:15px; border:1px solid #ccd0d4; border-radius:4px; margin-bottom: 20px;">
+                <h3 style="margin-top:0;"><?php esc_html_e( 'Top Requested Products', 'briones-quoteflow' ); ?></h3>
+                <?php if ( $top_products ) : ?>
+                    <ul style="margin-bottom:0;">
+                        <?php foreach ( $top_products as $tp ) : ?>
+                            <li><strong><?php echo esc_html( $tp->count ); ?></strong> - <?php echo esc_html( $tp->product_name ); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p><?php esc_html_e( 'No data yet.', 'briones-quoteflow' ); ?></p>
+                <?php endif; ?>
             </div>
 
             <form method="post" action="" style="margin-bottom: 20px;">
@@ -142,6 +247,7 @@ class BQF_Admin {
                 <?php submit_button( __( 'Export All Quotes to CSV', 'briones-quoteflow' ), 'primary', 'submit', false ); ?>
             </form>
 
+            <p><em><?php esc_html_e( 'Click on the Product Name to view full Lead details.', 'briones-quoteflow' ); ?></em></p>
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
@@ -159,7 +265,9 @@ class BQF_Admin {
                         <?php foreach ( $quotes as $quote ) : ?>
                             <tr>
                                 <td><?php echo esc_html( $quote->created_at ); ?></td>
-                                <td><?php echo esc_html( $quote->product_name ); ?></td>
+                                <td>
+                                    <strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes&action=view&id=' . $quote->id ) ); ?>"><?php echo esc_html( $quote->product_name ); ?></a></strong>
+                                </td>
                                 <td><?php echo esc_html( $quote->name ); ?></td>
                                 <td><?php echo esc_html( $quote->email ); ?></td>
                                 <td>
@@ -208,6 +316,177 @@ class BQF_Admin {
         <?php
     }
 
+    public function single_quote_view( $quote_id ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'bqf_quotes';
+        $quote = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $quote_id ) );
+
+        if ( ! $quote ) {
+            echo '<div class="wrap"><h1>Lead Not Found</h1></div>';
+            return;
+        }
+
+        $timeline = json_decode( $quote->timeline, true );
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Lead #', 'briones-quoteflow' ); ?><?php echo esc_html( $quote->id ); ?></h1>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=quoteflow-quotes' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Back to Quotes', 'briones-quoteflow' ); ?></a>
+            <hr class="wp-header-end">
+
+            <div id="poststuff">
+                <div id="post-body" class="metabox-holder columns-2">
+
+                    <div id="post-body-content">
+
+                        <!-- Product Info -->
+                        <div class="postbox">
+                            <h2 class="hndle"><span><?php esc_html_e( 'Product Details', 'briones-quoteflow' ); ?></span></h2>
+                            <div class="inside">
+                                <table class="form-table">
+                                    <tr>
+                                        <th><?php esc_html_e( 'Product', 'briones-quoteflow' ); ?></th>
+                                        <td>
+                                            <?php echo esc_html( $quote->product_name ); ?>
+                                            <?php if ( ! empty( $quote->product_sku ) ) echo '<br><small>SKU: ' . esc_html( $quote->product_sku ) . '</small>'; ?>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Price', 'briones-quoteflow' ); ?></th>
+                                        <td><?php echo esc_html( $quote->product_price ); ?></td>
+                                    </tr>
+                                    <?php if ( ! empty( $quote->variation_data ) ) : ?>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Variations', 'briones-quoteflow' ); ?></th>
+                                        <td><?php echo nl2br( esc_html( $quote->variation_data ) ); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $quote->product_url ) ) : ?>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Link', 'briones-quoteflow' ); ?></th>
+                                        <td><a href="<?php echo esc_url( $quote->product_url ); ?>" target="_blank"><?php esc_html_e( 'View Product', 'briones-quoteflow' ); ?></a></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="postbox">
+                            <h2 class="hndle"><span><?php esc_html_e( 'Customer Information', 'briones-quoteflow' ); ?></span></h2>
+                            <div class="inside">
+                                <table class="form-table">
+                                    <tr>
+                                        <th><?php esc_html_e( 'Name', 'briones-quoteflow' ); ?></th>
+                                        <td><?php echo esc_html( $quote->name ); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Email', 'briones-quoteflow' ); ?></th>
+                                        <td><a href="mailto:<?php echo esc_attr( $quote->email ); ?>"><?php echo esc_html( $quote->email ); ?></a></td>
+                                    </tr>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Phone', 'briones-quoteflow' ); ?></th>
+                                        <td>
+                                            <?php echo esc_html( $quote->phone ); ?>
+                                            <?php if ( ! empty( $quote->phone ) ) :
+                                                $clean_phone = preg_replace('/[^0-9+]/', '', $quote->phone);
+                                                $wa_message = rawurlencode( "Hello {$quote->name},\n\nWe received your quote request for {$quote->product_name}." );
+                                                $wa_url = "https://wa.me/{$clean_phone}?text={$wa_message}";
+                                            ?>
+                                                <a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" style="margin-left:10px; color: #25D366; text-decoration: none; font-weight: bold;">&#x1F4F1; WhatsApp</a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php if ( ! empty( $quote->company ) ) : ?>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Company', 'briones-quoteflow' ); ?></th>
+                                        <td><?php echo esc_html( $quote->company ); ?></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $quote->message ) ) : ?>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Message', 'briones-quoteflow' ); ?></th>
+                                        <td><div style="background:#f9f9f9; padding:10px; border:1px solid #ddd;"><?php echo nl2br( esc_html( $quote->message ) ); ?></div></td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Internal Notes -->
+                        <div class="postbox">
+                            <h2 class="hndle"><span><?php esc_html_e( 'Internal Notes', 'briones-quoteflow' ); ?></span></h2>
+                            <div class="inside">
+                                <?php if ( ! empty( $quote->internal_notes ) ) : ?>
+                                    <div style="background:#fffcf5; padding:15px; border-left:4px solid #dca54a; margin-bottom:15px;">
+                                        <?php echo nl2br( esc_html( $quote->internal_notes ) ); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <form method="post" action="">
+                                    <?php wp_nonce_field( 'bqf_note_nonce', 'bqf_note_nonce' ); ?>
+                                    <input type="hidden" name="bqf_quote_id" value="<?php echo esc_attr( $quote->id ); ?>">
+                                    <textarea name="bqf_internal_note" rows="3" style="width:100%;" placeholder="<?php esc_attr_e( 'Add a private note about this lead...', 'briones-quoteflow' ); ?>"></textarea>
+                                    <p><button type="submit" class="button"><?php esc_html_e( 'Add Note', 'briones-quoteflow' ); ?></button></p>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div> <!-- /post-body-content -->
+
+                    <!-- Sidebar -->
+                    <div id="postbox-container-1" class="postbox-container">
+
+                        <!-- Actions -->
+                        <div class="postbox">
+                            <h2 class="hndle"><span><?php esc_html_e( 'Actions', 'briones-quoteflow' ); ?></span></h2>
+                            <div class="inside">
+                                <form method="post" action="">
+                                    <?php wp_nonce_field( 'bqf_status_nonce', 'bqf_status_nonce' ); ?>
+                                    <input type="hidden" name="bqf_quote_id" value="<?php echo esc_attr( $quote->id ); ?>">
+                                    <p><strong><?php esc_html_e( 'Status:', 'briones-quoteflow' ); ?></strong></p>
+                                    <select name="bqf_new_status" style="width:100%; margin-bottom:10px;">
+                                        <option value="New" <?php selected( $quote->status, 'New' ); ?>>New</option>
+                                        <option value="Contacted" <?php selected( $quote->status, 'Contacted' ); ?>>Contacted</option>
+                                        <option value="Quoted" <?php selected( $quote->status, 'Quoted' ); ?>>Quoted</option>
+                                        <option value="Won" <?php selected( $quote->status, 'Won' ); ?>>Won</option>
+                                        <option value="Lost" <?php selected( $quote->status, 'Lost' ); ?>>Lost</option>
+                                    </select>
+                                    <button type="submit" class="button button-primary" style="width:100%; text-align:center;"><?php esc_html_e( 'Update Status', 'briones-quoteflow' ); ?></button>
+                                </form>
+                                <hr>
+                                <p style="text-align:center;">
+                                    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=bqf_generate_pdf&quote_id=' . $quote->id ), 'bqf_pdf_nonce' ) ); ?>" target="_blank" class="button" style="width:100%; text-align:center;"><?php esc_html_e( 'Print PDF', 'briones-quoteflow' ); ?></a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="postbox">
+                            <h2 class="hndle"><span><?php esc_html_e( 'Timeline', 'briones-quoteflow' ); ?></span></h2>
+                            <div class="inside">
+                                <?php if ( ! empty( $timeline ) && is_array( $timeline ) ) : ?>
+                                    <ul style="margin:0; padding:0; list-style:none;">
+                                        <?php foreach ( array_reverse( $timeline ) as $event ) : ?>
+                                            <li style="margin-bottom:15px; padding-left:10px; border-left:2px solid #ccc;">
+                                                <small style="color:#999;"><?php echo esc_html( date( 'M j, Y H:i', strtotime( $event['time'] ) ) ); ?></small><br>
+                                                <strong><?php echo esc_html( $event['action'] ); ?></strong><br>
+                                                <small><?php esc_html_e( 'by', 'briones-quoteflow' ); ?> <?php echo esc_html( $event['user'] ); ?></small>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php else : ?>
+                                    <p><?php esc_html_e( 'No activity yet.', 'briones-quoteflow' ); ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                    </div> <!-- /postbox-container-1 -->
+
+                </div> <!-- /post-body -->
+            </div> <!-- /poststuff -->
+        </div>
+        <?php
+    }
+
     public function handle_status_update() {
         if ( isset( $_POST['bqf_quote_id'] ) && isset( $_POST['bqf_new_status'] ) && isset( $_POST['bqf_status_nonce'] ) && wp_verify_nonce( $_POST['bqf_status_nonce'], 'bqf_status_nonce' ) ) {
             if ( ! current_user_can( 'manage_options' ) ) {
@@ -221,14 +500,63 @@ class BQF_Admin {
 
             $wpdb->update(
                 $table_name,
-                array( 'status' => $new_status ),
+                array( 'status' => $new_status, 'updated_at' => current_time( 'mysql' ) ),
                 array( 'id' => $quote_id ),
-                array( '%s' ),
+                array( '%s', '%s' ),
                 array( '%d' )
             );
 
-            // Redirect back to same page to prevent re-submission
-            wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+            if ( class_exists( 'BQF_Logger' ) ) {
+                BQF_Logger::log_timeline( $quote_id, "Status Changed to: {$new_status}" );
+            }
+
+            // Redirect back to single view if that's where they came from
+            if ( isset( $_GET['action'] ) && $_GET['action'] === 'view' ) {
+                wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'action' => 'view', 'id' => $quote_id, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+            } else {
+                wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+            }
+            exit;
+        }
+    }
+
+    public function handle_add_note() {
+        if ( isset( $_POST['bqf_quote_id'] ) && isset( $_POST['bqf_internal_note'] ) && isset( $_POST['bqf_note_nonce'] ) && wp_verify_nonce( $_POST['bqf_note_nonce'], 'bqf_note_nonce' ) ) {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return;
+            }
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'bqf_quotes';
+            $quote_id = intval( $_POST['bqf_quote_id'] );
+            $new_note = sanitize_textarea_field( $_POST['bqf_internal_note'] );
+
+            if ( empty( $new_note ) ) {
+                return;
+            }
+
+            $existing = $wpdb->get_var( $wpdb->prepare( "SELECT internal_notes FROM $table_name WHERE id = %d", $quote_id ) );
+
+            $current_user = wp_get_current_user();
+            $user_name = $current_user->exists() ? $current_user->display_name : 'Admin';
+            $timestamp = date( 'M j, Y H:i', current_time( 'timestamp' ) );
+
+            $note_entry = "[{$timestamp} - {$user_name}]\n{$new_note}\n\n";
+            $updated_notes = $existing ? $existing . $note_entry : $note_entry;
+
+            $wpdb->update(
+                $table_name,
+                array( 'internal_notes' => $updated_notes, 'updated_at' => current_time( 'mysql' ) ),
+                array( 'id' => $quote_id ),
+                array( '%s', '%s' ),
+                array( '%d' )
+            );
+
+            if ( class_exists( 'BQF_Logger' ) ) {
+                BQF_Logger::log_timeline( $quote_id, "Note Added" );
+            }
+
+            wp_redirect( add_query_arg( array( 'page' => 'quoteflow-quotes', 'action' => 'view', 'id' => $quote_id, 'note_added' => 'true' ), admin_url( 'admin.php' ) ) );
             exit;
         }
     }
