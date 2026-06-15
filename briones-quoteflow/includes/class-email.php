@@ -110,6 +110,18 @@ class BQF_Email {
         $product_price = sanitize_text_field( $data['product_price'] );
         $reference_id = isset( $data['reference_id'] ) ? sanitize_text_field( $data['reference_id'] ) : '';
 
+        $product_id = intval( $data['product_id'] );
+        $image_url = '';
+        if ( $product_id && function_exists( 'wc_get_product' ) ) {
+            $product = wc_get_product( $product_id );
+            if ( $product ) {
+                $image_id = $product->get_image_id();
+                if ( $image_id ) {
+                    $image_url = wp_get_attachment_url( $image_id );
+                }
+            }
+        }
+
         $subject_template = get_option( 'bqf_email_customer_subject', 'We have received your quote request' );
         $subject = str_replace(
             array( '{product_name}', '{customer_name}', '{product_price}' ),

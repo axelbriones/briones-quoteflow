@@ -621,6 +621,11 @@ class BQF_Admin {
 
     public function handle_test_email() {
         if ( isset( $_POST['bqf_send_test_email'] ) && isset( $_POST['option_page'] ) && $_POST['option_page'] === 'bqf_settings_group' ) {
+
+            if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'bqf_settings_group-options' ) ) {
+                return;
+            }
+
             if ( ! current_user_can( 'manage_options' ) ) {
                 return;
             }
