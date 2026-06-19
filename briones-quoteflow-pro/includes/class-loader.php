@@ -19,6 +19,7 @@ class BQF_Pro_Loader {
         require_once BQF_PRO_PLUGIN_DIR . 'includes/class-integrations.php';
         require_once BQF_PRO_PLUGIN_DIR . 'includes/class-webhooks.php';
         require_once BQF_PRO_PLUGIN_DIR . 'includes/class-analytics.php';
+        require_once BQF_PRO_PLUGIN_DIR . 'includes/class-custom-fields.php';
     }
 
     private static function instantiate() {
@@ -30,5 +31,6 @@ class BQF_Pro_Loader {
         new BQF_Pro_Integrations();
         new BQF_Pro_Webhooks();
         new BQF_Pro_Analytics();
+        new BQF_Pro_Custom_Fields();
     }
 }

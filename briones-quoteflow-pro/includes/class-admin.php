@@ -13,6 +13,8 @@ class BQF_Pro_Admin {
     public function register_pro_settings() {
         register_setting( 'bqf_pro_settings_group', 'bqf_pro_webhook_active' );
         register_setting( 'bqf_pro_settings_group', 'bqf_pro_webhook_url' );
+
+        register_setting( 'bqf_pro_fields_group', 'bqf_pro_custom_fields' );
     }
 
     public function register_pro_menus() {
@@ -70,7 +72,7 @@ class BQF_Pro_Admin {
             __( 'Settings', 'briones-quoteflow-pro' ),
             'manage_options',
             'bqf-pro-settings',
-            array( $this, 'placeholder_page' )
+            array( $this, 'settings_page' )
         );
     }
 
@@ -95,6 +97,111 @@ class BQF_Pro_Admin {
                 <li>PDF Generators & Lead Assignment</li>
             </ul>
         </div>
+        <?php
+    }
+
+    public function settings_page() {
+        wp_enqueue_script( 'jquery-ui-sortable' );
+        $fields = get_option( 'bqf_pro_custom_fields', array() );
+        if ( ! is_array( $fields ) ) {
+            $fields = array();
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'QuoteFlow Pro Settings', 'briones-quoteflow-pro' ); ?></h1>
+
+            <h2 class="title"><?php esc_html_e( 'Custom Fields Builder', 'briones-quoteflow-pro' ); ?></h2>
+            <p><?php esc_html_e( 'Add dynamic custom fields to your quote request modal. These will automatically appear in the form and be tracked in your CRM.', 'briones-quoteflow-pro' ); ?></p>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'bqf_pro_fields_group' ); ?>
+
+                <table class="wp-list-table widefat fixed striped" style="max-width: 800px; margin-bottom: 20px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th><?php esc_html_e( 'Field Label', 'briones-quoteflow-pro' ); ?></th>
+                            <th><?php esc_html_e( 'Field Type', 'briones-quoteflow-pro' ); ?></th>
+                            <th><?php esc_html_e( 'Required', 'briones-quoteflow-pro' ); ?></th>
+                            <th style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bqf-pro-fields-repeater">
+                        <?php
+                        $counter = 0;
+                        foreach ( $fields as $field ) :
+                            $label = isset($field['label']) ? $field['label'] : '';
+                            $type  = isset($field['type']) ? $field['type'] : 'text';
+                            $req   = isset($field['required']) ? $field['required'] : '0';
+                        ?>
+                        <tr class="bqf-field-row">
+                            <td style="cursor: move; font-size: 20px; text-align: center;">&#x2195;</td>
+                            <td>
+                                <input type="text" name="bqf_pro_custom_fields[<?php echo $counter; ?>][label]" value="<?php echo esc_attr( $label ); ?>" class="regular-text" placeholder="e.g. Desired Delivery Date" required />
+                            </td>
+                            <td>
+                                <select name="bqf_pro_custom_fields[<?php echo $counter; ?>][type]">
+                                    <option value="text" <?php selected( $type, 'text' ); ?>>Text</option>
+                                    <option value="number" <?php selected( $type, 'number' ); ?>>Number</option>
+                                    <option value="date" <?php selected( $type, 'date' ); ?>>Date</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="bqf_pro_custom_fields[<?php echo $counter; ?>][required]" value="1" <?php checked( $req, '1' ); ?> />
+                            </td>
+                            <td>
+                                <button type="button" class="button bqf-remove-field" style="color:#d63638; border-color:#d63638;">&times; Remove</button>
+                            </td>
+                        </tr>
+                        <?php $counter++; endforeach; ?>
+                    </tbody>
+                </table>
+
+                <p>
+                    <button type="button" id="bqf-add-field" class="button button-secondary">+ <?php esc_html_e( 'Add Custom Field', 'briones-quoteflow-pro' ); ?></button>
+                </p>
+
+                <?php submit_button(); ?>
+            </form>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($){
+            var fieldCounter = <?php echo max( 1, $counter ); ?>;
+
+            $('#bqf-pro-fields-repeater').sortable({
+                axis: 'y',
+                cursor: 'move'
+            });
+
+            $('#bqf-add-field').on('click', function(e){
+                e.preventDefault();
+                var html = '<tr class="bqf-field-row">' +
+                    '<td style="cursor: move; font-size: 20px; text-align: center;">&#x2195;</td>' +
+                    '<td><input type="text" name="bqf_pro_custom_fields[' + fieldCounter + '][label]" value="" class="regular-text" placeholder="e.g. Quantity" required /></td>' +
+                    '<td>' +
+                        '<select name="bqf_pro_custom_fields[' + fieldCounter + '][type]">' +
+                            '<option value="text">Text</option>' +
+                            '<option value="number">Number</option>' +
+                            '<option value="date">Date</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td><input type="checkbox" name="bqf_pro_custom_fields[' + fieldCounter + '][required]" value="1" /></td>' +
+                    '<td><button type="button" class="button bqf-remove-field" style="color:#d63638; border-color:#d63638;">&times; Remove</button></td>' +
+                '</tr>';
+
+                $('#bqf-pro-fields-repeater').append(html);
+                fieldCounter++;
+            });
+
+            $(document).on('click', '.bqf-remove-field', function(e){
+                e.preventDefault();
+                if(confirm('<?php esc_attr_e( 'Remove this field?', 'briones-quoteflow-pro' ); ?>')){
+                    $(this).closest('tr').remove();
+                }
+            });
+        });
+        </script>
         <?php
     }
 
