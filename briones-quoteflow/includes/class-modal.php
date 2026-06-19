@@ -168,6 +168,15 @@ class BQF_Modal {
                 $success_message = __( 'Your request has been received, but our notification system is experiencing delays. We will contact you soon.', 'briones-quoteflow' );
             }
 
+            /**
+             * Fires immediately after a quote is successfully created and emails are dispatched.
+             * Allows Pro add-ons to hook into the workflow (e.g., sending Webhooks).
+             *
+             * @param int   $quote_id The ID of the newly created quote request.
+             * @param array $data     The array of data captured from the form.
+             */
+            do_action( 'bqf_after_quote_created', $quote_id, $data );
+
             wp_send_json_success( array( 'message' => $success_message ) );
         } else {
             wp_send_json_error( array( 'message' => __( 'Something went wrong while saving your request. Please try again later.', 'briones-quoteflow' ) ) );

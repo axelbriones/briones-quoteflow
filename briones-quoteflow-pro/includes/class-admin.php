@@ -7,6 +7,12 @@ class BQF_Pro_Admin {
 
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'register_pro_menus' ) );
+        add_action( 'admin_init', array( $this, 'register_pro_settings' ) );
+    }
+
+    public function register_pro_settings() {
+        register_setting( 'bqf_pro_settings_group', 'bqf_pro_webhook_active' );
+        register_setting( 'bqf_pro_settings_group', 'bqf_pro_webhook_url' );
     }
 
     public function register_pro_menus() {
@@ -46,7 +52,7 @@ class BQF_Pro_Admin {
             __( 'Automations', 'briones-quoteflow-pro' ),
             'manage_options',
             'bqf-pro-automations',
-            array( $this, 'placeholder_page' )
+            array( $this, 'automations_page' )
         );
 
         add_submenu_page(
@@ -97,6 +103,38 @@ class BQF_Pro_Admin {
         <div class="wrap">
             <h1><?php esc_html_e( 'Premium Module Settings', 'briones-quoteflow-pro' ); ?></h1>
             <p><?php esc_html_e( 'This module is structurally loaded and awaiting business logic implementation.', 'briones-quoteflow-pro' ); ?></p>
+        </div>
+        <?php
+    }
+
+    public function automations_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Automations & Webhooks', 'briones-quoteflow-pro' ); ?></h1>
+            <p><?php esc_html_e( 'Connect Briones QuoteFlow to external services like Zapier, Make (Integromat), or custom endpoints by sending a JSON payload every time a new quote request is created.', 'briones-quoteflow-pro' ); ?></p>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'bqf_pro_settings_group' ); ?>
+                <?php do_settings_sections( 'bqf_pro_settings_group' ); ?>
+
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Enable Webhook', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="bqf_pro_webhook_active" value="1" <?php checked( 1, get_option('bqf_pro_webhook_active', 0), true ); ?> />
+                            <?php esc_html_e( 'Send a POST request when a new quote is created.', 'briones-quoteflow-pro' ); ?>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Webhook URL', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="url" name="bqf_pro_webhook_url" value="<?php echo esc_url( get_option('bqf_pro_webhook_url', '') ); ?>" class="regular-text" placeholder="https://hooks.zapier.com/..." />
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button(); ?>
+            </form>
         </div>
         <?php
     }
