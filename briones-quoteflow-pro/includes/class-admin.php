@@ -15,6 +15,12 @@ class BQF_Pro_Admin {
         register_setting( 'bqf_pro_settings_group', 'bqf_pro_webhook_url' );
 
         register_setting( 'bqf_pro_fields_group', 'bqf_pro_custom_fields' );
+
+        // Integrations Settings
+        register_setting( 'bqf_pro_integrations_group', 'bqf_pro_hubspot_active' );
+        register_setting( 'bqf_pro_integrations_group', 'bqf_pro_hubspot_token' );
+        register_setting( 'bqf_pro_integrations_group', 'bqf_pro_gsheets_active' );
+        register_setting( 'bqf_pro_integrations_group', 'bqf_pro_gsheets_url' );
     }
 
     public function register_pro_menus() {
@@ -45,7 +51,7 @@ class BQF_Pro_Admin {
             __( 'Integrations', 'briones-quoteflow-pro' ),
             'manage_options',
             'bqf-pro-integrations',
-            array( $this, 'placeholder_page' )
+            array( $this, 'integrations_page' )
         );
 
         add_submenu_page(
@@ -202,6 +208,63 @@ class BQF_Pro_Admin {
             });
         });
         </script>
+        <?php
+    }
+
+    public function integrations_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Integrations', 'briones-quoteflow-pro' ); ?></h1>
+            <p><?php esc_html_e( 'Connect Briones QuoteFlow natively with your favorite CRM and Spreadsheet tools.', 'briones-quoteflow-pro' ); ?></p>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'bqf_pro_integrations_group' ); ?>
+                <?php do_settings_sections( 'bqf_pro_integrations_group' ); ?>
+
+                <h2 class="title" style="border-bottom: 1px solid #ccc; padding-bottom: 10px;"><img src="https://www.hubspot.com/hubfs/assets/hubspot.com/style-guide/brand-guidelines/guidelines_the-sprocket.svg" width="20" style="vertical-align:middle;"> <?php esc_html_e( 'HubSpot CRM', 'briones-quoteflow-pro' ); ?></h2>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Enable HubSpot', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="bqf_pro_hubspot_active" value="1" <?php checked( 1, get_option('bqf_pro_hubspot_active', 0), true ); ?> />
+                            <?php esc_html_e( 'Automatically send new quote requests to HubSpot as Contacts.', 'briones-quoteflow-pro' ); ?>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Private App Access Token', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="password" name="bqf_pro_hubspot_token" value="<?php echo esc_attr( get_option('bqf_pro_hubspot_token', '') ); ?>" class="regular-text" placeholder="pat-na1-..." />
+                            <p class="description"><?php esc_html_e( 'Create a Private App in HubSpot with crm.objects.contacts.write permissions.', 'briones-quoteflow-pro' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2 class="title" style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 40px;"><img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Google_Sheets_Logo_%282020%29.svg" width="16" style="vertical-align:middle;"> <?php esc_html_e( 'Google Sheets', 'briones-quoteflow-pro' ); ?></h2>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Enable Google Sheets', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="bqf_pro_gsheets_active" value="1" <?php checked( 1, get_option('bqf_pro_gsheets_active', 0), true ); ?> />
+                            <?php esc_html_e( 'Append new quote requests as rows in a Google Sheet.', 'briones-quoteflow-pro' ); ?>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php esc_html_e( 'Google App Script URL', 'briones-quoteflow-pro' ); ?></th>
+                        <td>
+                            <input type="url" name="bqf_pro_gsheets_url" value="<?php echo esc_url( get_option('bqf_pro_gsheets_url', '') ); ?>" class="regular-text" placeholder="https://script.google.com/macros/s/.../exec" />
+                            <p class="description"><?php esc_html_e( 'Deploy an App Script with doPost(e) bound to your sheet.', 'briones-quoteflow-pro' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <h2 class="title" style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 40px; color:#aaa;"><?php esc_html_e( 'Zoho CRM (Coming Soon)', 'briones-quoteflow-pro' ); ?></h2>
+                <p style="color:#aaa;"><em><?php esc_html_e( 'Native Zoho integration requires complex OAuth2 flows which are currently being developed for a future update. Please use the Webhooks module to connect to Zoho via Zapier in the meantime.', 'briones-quoteflow-pro' ); ?></em></p>
+
+                <p style="margin-top: 30px;">
+                    <?php submit_button(); ?>
+                </p>
+            </form>
+        </div>
         <?php
     }
 
