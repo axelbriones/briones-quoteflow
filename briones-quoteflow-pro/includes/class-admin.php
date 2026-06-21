@@ -21,6 +21,9 @@ class BQF_Pro_Admin {
         register_setting( 'bqf_pro_integrations_group', 'bqf_pro_hubspot_token' );
         register_setting( 'bqf_pro_integrations_group', 'bqf_pro_gsheets_active' );
         register_setting( 'bqf_pro_integrations_group', 'bqf_pro_gsheets_url' );
+
+        // License Settings
+        register_setting( 'bqf_pro_license_group', 'bqf_pro_license_key' );
     }
 
     public function register_pro_menus() {
@@ -43,6 +46,15 @@ class BQF_Pro_Admin {
             'manage_options',
             'bqf-pro-overview',
             array( $this, 'overview_page' )
+        );
+
+        add_submenu_page(
+            'bqf-pro-overview',
+            __( 'License', 'briones-quoteflow-pro' ),
+            __( 'License', 'briones-quoteflow-pro' ),
+            'manage_options',
+            'bqf-pro-license',
+            array( $this, 'license_page' )
         );
 
         add_submenu_page(
@@ -80,6 +92,54 @@ class BQF_Pro_Admin {
             'bqf-pro-settings',
             array( $this, 'settings_page' )
         );
+    }
+
+    public function license_page() {
+        $license = get_option( 'bqf_pro_license_key' );
+        $status  = get_option( 'bqf_pro_license_status' );
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'QuoteFlow Pro License', 'briones-quoteflow-pro' ); ?></h1>
+            <p><?php esc_html_e( 'Enter your license key to enable automatic updates and premium support.', 'briones-quoteflow-pro' ); ?></p>
+
+            <?php settings_errors( 'bqf_pro_license_notices' ); ?>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'bqf_pro_license_group' ); ?>
+                <table class="form-table">
+                    <tbody>
+                        <tr valign="top">
+                            <th scope="row" valign="top">
+                                <?php esc_html_e( 'License Key', 'briones-quoteflow-pro' ); ?>
+                            </th>
+                            <td>
+                                <input id="bqf_pro_license_key" name="bqf_pro_license_key" type="password" class="regular-text" value="<?php echo esc_attr( $license ); ?>" />
+                                <label class="description" for="bqf_pro_license_key"><?php esc_html_e( 'Enter your license key', 'briones-quoteflow-pro' ); ?></label>
+                            </td>
+                        </tr>
+                        <?php if ( false !== $license ) { ?>
+                            <tr valign="top">
+                                <th scope="row" valign="top">
+                                    <?php esc_html_e( 'Activate License', 'briones-quoteflow-pro' ); ?>
+                                </th>
+                                <td>
+                                    <?php if ( $status !== false && $status == 'valid' ) { ?>
+                                        <span style="color:green; font-weight:bold;"><?php esc_html_e( 'Active', 'briones-quoteflow-pro' ); ?></span><br><br>
+                                        <?php wp_nonce_field( 'bqf_pro_nonce', 'bqf_pro_nonce' ); ?>
+                                        <input type="submit" class="button-secondary" name="bqf_pro_license_deactivate" value="<?php esc_attr_e( 'Deactivate License', 'briones-quoteflow-pro' ); ?>"/>
+                                    <?php } else {
+                                        wp_nonce_field( 'bqf_pro_nonce', 'bqf_pro_nonce' ); ?>
+                                        <input type="submit" class="button-primary" name="bqf_pro_license_activate" value="<?php esc_attr_e( 'Activate License', 'briones-quoteflow-pro' ); ?>"/>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+                <?php submit_button( __( 'Save Key', 'briones-quoteflow-pro' ) ); ?>
+            </form>
+        </div>
+        <?php
     }
 
     public function overview_page() {
